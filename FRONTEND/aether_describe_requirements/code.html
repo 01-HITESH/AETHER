@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AETHER | Design Requirements</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .glass-surface {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card-hover:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(212, 197, 169, 0.3);
+            transition: all 0.3s ease;
+        }
+        .gold-glow {
+            box-shadow: 0 0 20px rgba(212, 197, 169, 0.15);
+        }
+        .gold-glow-hover:hover {
+            box-shadow: 0 0 30px rgba(212, 197, 169, 0.3);
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            height: 4px;
+            border-radius: 2px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #d4c5a9;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(212, 197, 169, 0.5);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary-fixed-dim": "#d4c5a9",
+                      "primary-container": "#121212",
+                      "on-secondary": "#382f1c",
+                      "on-primary-fixed": "#1c1b1b",
+                      "inverse-surface": "#e4e2e4",
+                      "on-background": "#e4e2e4",
+                      "error": "#ffb4ab",
+                      "tertiary-fixed": "#e2e2e4",
+                      "surface-container-high": "#2a2a2c",
+                      "error-container": "#93000a",
+                      "background": "#131315",
+                      "on-tertiary-fixed-variant": "#454749",
+                      "on-secondary-fixed": "#221b09",
+                      "on-error": "#690005",
+                      "on-primary": "#313030",
+                      "surface-tint": "#c8c6c5",
+                      "outline": "#8e9192",
+                      "inverse-primary": "#5f5e5e",
+                      "on-tertiary": "#2f3132",
+                      "secondary-fixed": "#f1e1c4",
+                      "primary": "#c8c6c5",
+                      "surface-dim": "#131315",
+                      "tertiary-fixed-dim": "#c6c6c8",
+                      "primary-fixed": "#e5e2e1",
+                      "secondary-container": "#504630",
+                      "on-primary-container": "#7e7d7d",
+                      "surface-container": "#1f1f21",
+                      "secondary": "#d4c5a9",
+                      "tertiary": "#c6c6c8",
+                      "on-primary-fixed-variant": "#474646",
+                      "surface-container-highest": "#353437",
+                      "inverse-on-surface": "#303032",
+                      "on-tertiary-fixed": "#1a1c1d",
+                      "surface-container-lowest": "#0e0e10",
+                      "on-secondary-fixed-variant": "#504630",
+                      "surface-container-low": "#1b1b1d",
+                      "surface-bright": "#39393b",
+                      "on-error-container": "#ffdad6",
+                      "tertiary-container": "#101214",
+                      "surface": "#131315",
+                      "on-tertiary-container": "#7c7d7f",
+                      "primary-fixed-dim": "#c8c6c5",
+                      "on-surface-variant": "#c4c7c7",
+                      "on-surface": "#e4e2e4",
+                      "surface-variant": "#353437",
+                      "outline-variant": "#444748",
+                      "on-secondary-container": "#c2b498"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-max": "1440px",
+                      "gutter": "24px",
+                      "margin-mobile": "20px",
+                      "margin-desktop": "64px",
+                      "unit": "8px"
+              },
+              "fontFamily": {
+                      "body-lg": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "label-caps": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "display-lg-mobile": ["Inter"],
+                      "headline-sm": ["Inter"],
+                      "body-md": ["Inter"],
+                      "display-lg": ["Inter"]
+              },
+              "fontSize": {
+                      "body-lg": ["18px", {"lineHeight": "28px", "letterSpacing": "0em", "fontWeight": "400"}],
+                      "headline-md": ["32px", {"lineHeight": "40px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                      "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                      "label-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                      "display-lg-mobile": ["40px", {"lineHeight": "48px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                      "headline-sm": ["24px", {"lineHeight": "32px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400"}],
+                      "display-lg": ["64px", {"lineHeight": "72px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-secondary-container selection:text-secondary-fixed">
+<!-- SIDEBAR NAVIGATION (Shared Component Implementation) -->
+<aside class="fixed left-0 top-0 h-screen w-64 bg-surface-container-lowest/80 backdrop-blur-xl border-r border-white/10 flex flex-col py-margin-desktop px-4 z-50">
+<div class="mb-12 px-4">
+<h1 class="font-display-lg text-display-lg-mobile tracking-widest text-secondary uppercase">AETHER</h1>
+<p class="text-[10px] text-on-surface-variant tracking-[0.2em] mt-1 font-label-caps">PREMIUM AI STUDIO</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-300" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="font-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-secondary bg-white/5 border-l-2 border-secondary font-medium transition-colors duration-300" href="#">
+<span class="material-symbols-outlined text-[20px]">add_box</span>
+<span class="font-body-md">New Design</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-300" href="#">
+<span class="material-symbols-outlined text-[20px]">folder_open</span>
+<span class="font-body-md">My Projects</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-300" href="#">
+<span class="material-symbols-outlined text-[20px]">bookmark</span>
+<span class="font-body-md">Saved Designs</span>
+</a>
+</nav>
+<div class="mt-auto pt-8 border-t border-white/5 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-300" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="font-body-md">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-300" href="#">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+<span class="font-body-md">Support</span>
+</a>
+<div class="mt-6 flex items-center gap-3 px-4 py-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="text-secondary text-[12px] font-bold">AP</span>
+</div>
+<div>
+<p class="text-[14px] text-on-surface font-medium leading-none">Architect Profile</p>
+<p class="text-[11px] text-on-surface-variant mt-1">Premium Tier</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- MAIN CONTENT CANVAS -->
+<main class="ml-64 min-h-screen flex flex-col relative">
+<!-- TOP APP BAR -->
+<header class="fixed top-0 right-0 left-64 h-20 bg-surface-dim/40 backdrop-blur-3xl border-b border-white/5 z-40 flex items-center justify-between px-margin-desktop">
+<div class="flex items-center gap-8">
+<nav class="flex items-center gap-6">
+<a class="text-on-surface-variant hover:text-secondary transition-opacity font-label-caps text-label-caps" href="#">Gallery</a>
+<a class="text-on-surface-variant hover:text-secondary transition-opacity font-label-caps text-label-caps" href="#">Architects</a>
+<a class="text-on-surface-variant hover:text-secondary transition-opacity font-label-caps text-label-caps" href="#">Sustainability</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<input class="bg-white/5 border border-white/10 rounded-full px-5 py-1.5 text-[13px] w-64 focus:outline-none focus:border-secondary/50 transition-all" placeholder="Search designs..." type="text"/>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+</div>
+<button class="px-6 py-2 bg-secondary text-on-secondary font-label-caps text-label-caps rounded-sm hover:opacity-80 transition-opacity">
+                    New Project
+                </button>
+</div>
+</header>
+<!-- CONTENT BODY -->
+<div class="pt-32 px-margin-desktop pb-32 max-w-container-max mx-auto w-full grid grid-cols-12 gap-gutter">
+<!-- PROGRESS INDICATOR -->
+<div class="col-span-12 mb-12 animate-fade-in" style="animation-delay: 0.1s;">
+<div class="flex items-center justify-between max-w-3xl mx-auto relative">
+<!-- Progress Line -->
+<div class="absolute top-1/2 left-0 w-full h-[1px] bg-white/10 -z-10 -translate-y-1/2"></div>
+<div class="absolute top-1/2 left-0 w-1/2 h-[2px] bg-secondary -z-10 -translate-y-1/2 shadow-[0_0_10px_rgba(212,197,169,0.3)]"></div>
+<!-- Steps -->
+<div class="flex flex-col items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-on-secondary text-[12px] font-bold">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<span class="text-[11px] font-label-caps text-secondary uppercase">Room</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-on-secondary text-[12px] font-bold">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<span class="text-[11px] font-label-caps text-secondary uppercase">Style</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-secondary text-on-secondary flex items-center justify-center text-[14px] font-bold gold-glow">3</div>
+<span class="text-[12px] font-label-caps text-on-surface uppercase tracking-wider">Requirements</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-surface-container border border-white/10 text-on-surface-variant flex items-center justify-center text-[12px]">4</div>
+<span class="text-[11px] font-label-caps text-on-surface-variant uppercase">Generate</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-surface-container border border-white/10 text-on-surface-variant flex items-center justify-center text-[12px]">5</div>
+<span class="text-[11px] font-label-caps text-on-surface-variant uppercase">Results</span>
+</div>
+</div>
+</div>
+<!-- FORM CONTENT -->
+<div class="col-span-8 space-y-10 animate-fade-in" style="animation-delay: 0.2s;">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Describe Your Design Requirements</h2>
+<p class="font-body-md text-on-surface-variant mt-2">Provide preferences and details to help the AI generate your ideal interior design.</p>
+</div>
+<!-- Color Palette -->
+<section class="glass-surface p-8 rounded-xl">
+<h3 class="font-label-caps text-label-caps text-secondary uppercase tracking-widest mb-6">1. Preferred Color Palette</h3>
+<div class="flex flex-wrap gap-3">
+<button class="px-5 py-2 rounded-full border border-secondary text-secondary bg-secondary/10 font-label-sm transition-all duration-300">Neutral</button>
+<button class="px-5 py-2 rounded-full border border-white/10 text-on-surface-variant hover:border-secondary/50 hover:text-secondary font-label-sm transition-all duration-300">Beige</button>
+<button class="px-5 py-2 rounded-full border border-white/10 text-on-surface-variant hover:border-secondary/50 hover:text-secondary font-label-sm transition-all duration-300">White</button>
+<button class="px-5 py-2 rounded-full border border-white/10 text-on-surface-variant hover:border-secondary/50 hover:text-secondary font-label-sm transition-all duration-300">Black</button>
+<button class="px-5 py-2 rounded-full border border-white/10 text-on-surface-variant hover:border-secondary/50 hover:text-secondary font-label-sm transition-all duration-300">Earth Tones</button>
+<button class="px-5 py-2 rounded-full border border-white/10 text-on-surface-variant hover:border-secondary/50 hover:text-secondary font-label-sm transition-all duration-300">Blue</button>
+<button class="px-5 py-2 rounded-full border border-white/10 text-on-surface-variant hover:border-secondary/50 hover:text-secondary font-label-sm transition-all duration-300">Green</button>
+<button class="px-5 py-2 rounded-full border border-secondary/20 text-secondary-fixed-dim bg-secondary/5 font-label-sm transition-all duration-300 flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-[#D4C5A9]"></span>
+                            Luxury Gold
+                        </button>
+</div>
+</section>
+<!-- Budget Range -->
+<section class="glass-surface p-8 rounded-xl">
+<h3 class="font-label-caps text-label-caps text-secondary uppercase tracking-widest mb-10">2. Budget Range</h3>
+<div class="px-4">
+<input class="w-full" max="4" min="1" step="1" type="range" value="3"/>
+<div class="flex justify-between mt-6">
+<div class="text-center w-1/4">
+<span class="block text-[11px] font-label-caps text-on-surface-variant uppercase">Economy</span>
+<span class="text-[10px] text-white/40">$5k - $15k</span>
+</div>
+<div class="text-center w-1/4">
+<span class="block text-[11px] font-label-caps text-on-surface-variant uppercase">Standard</span>
+<span class="text-[10px] text-white/40">$15k - $50k</span>
+</div>
+<div class="text-center w-1/4">
+<span class="block text-[11px] font-label-caps text-secondary uppercase font-semibold">Premium</span>
+<span class="text-[10px] text-secondary/60">$50k - $150k</span>
+</div>
+<div class="text-center w-1/4">
+<span class="block text-[11px] font-label-caps text-on-surface-variant uppercase">Luxury</span>
+<span class="text-[10px] text-white/40">$150k+</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Furniture & Lighting Grid -->
+<div class="grid grid-cols-2 gap-gutter">
+<!-- Furniture Preference -->
+<section class="glass-surface p-8 rounded-xl flex flex-col">
+<h3 class="font-label-caps text-label-caps text-secondary uppercase tracking-widest mb-6">3. Furniture Preference</h3>
+<div class="grid grid-cols-2 gap-3">
+<div class="glass-card-hover border border-secondary bg-secondary/5 p-4 rounded-lg cursor-pointer transition-all">
+<span class="material-symbols-outlined text-secondary mb-2" style="font-variation-settings: 'FILL' 1;">chair</span>
+<p class="text-[12px] font-semibold text-secondary uppercase">Modern</p>
+</div>
+<div class="glass-card-hover border border-white/5 p-4 rounded-lg cursor-pointer transition-all">
+<span class="material-symbols-outlined text-on-surface-variant mb-2">grid_view</span>
+<p class="text-[12px] font-semibold text-on-surface-variant uppercase">Minimal</p>
+</div>
+<div class="glass-card-hover border border-white/5 p-4 rounded-lg cursor-pointer transition-all">
+<span class="material-symbols-outlined text-on-surface-variant mb-2">hotel</span>
+<p class="text-[12px] font-semibold text-on-surface-variant uppercase">Luxury</p>
+</div>
+<div class="glass-card-hover border border-white/5 p-4 rounded-lg cursor-pointer transition-all">
+<span class="material-symbols-outlined text-on-surface-variant mb-2">architecture</span>
+<p class="text-[12px] font-semibold text-on-surface-variant uppercase">Custom</p>
+</div>
+</div>
+</section>
+<!-- Lighting Preference -->
+<section class="glass-surface p-8 rounded-xl flex flex-col">
+<h3 class="font-label-caps text-label-caps text-secondary uppercase tracking-widest mb-6">4. Lighting Preference</h3>
+<div class="grid grid-cols-2 gap-3">
+<div class="glass-card-hover border border-white/5 p-4 rounded-lg cursor-pointer transition-all">
+<span class="material-symbols-outlined text-on-surface-variant mb-2">wb_sunny</span>
+<p class="text-[12px] font-semibold text-on-surface-variant uppercase">Natural</p>
+</div>
+<div class="glass-card-hover border border-secondary bg-secondary/5 p-4 rounded-lg cursor-pointer transition-all">
+<span class="material-symbols-outlined text-secondary mb-2" style="font-variation-settings: 'FILL' 1;">flare</span>
+<p class="text-[12px] font-semibold text-secondary uppercase">Warm</p>
+</div>
+<div class="glass-card-hover border border-white/5 p-4 rounded-lg cursor-pointer transition-all">
+<span class="material-symbols-outlined text-on-surface-variant mb-2">lightbulb</span>
+<p class="text-[12px] font-semibold text-on-surface-variant uppercase">Smart</p>
+</div>
+<div class="glass-card-hover border border-white/5 p-4 rounded-lg cursor-pointer transition-all">
+<span class="material-symbols-outlined text-on-surface-variant mb-2">fluorescent</span>
+<p class="text-[12px] font-semibold text-on-surface-variant uppercase">Bright</p>
+</div>
+</div>
+</section>
+</div>
+<!-- Design Goals -->
+<section class="glass-surface p-8 rounded-xl">
+<h3 class="font-label-caps text-label-caps text-secondary uppercase tracking-widest mb-6">5. Design Goals</h3>
+<textarea class="w-full bg-white/5 border border-white/10 rounded-lg p-5 text-on-surface placeholder:text-white/20 focus:outline-none focus:border-secondary/50 focus:ring-1 focus:ring-secondary/50 transition-all resize-none" placeholder="Describe the atmosphere, functionality, and overall vision for this room..." rows="4"></textarea>
+</section>
+<!-- Additional Notes -->
+<section class="glass-surface p-8 rounded-xl">
+<h3 class="font-label-caps text-label-caps text-secondary uppercase tracking-widest mb-6">6. Additional Notes (Optional)</h3>
+<textarea class="w-full bg-white/5 border border-white/10 rounded-lg p-5 text-on-surface placeholder:text-white/20 focus:outline-none focus:border-secondary/50 focus:ring-1 focus:ring-secondary/50 transition-all resize-none" placeholder="Any specific brands, specific spatial constraints, or heirloom pieces to include..." rows="2"></textarea>
+</section>
+</div>
+<!-- SIDEBAR PANEL (RIGHT) -->
+<div class="col-span-4 space-y-6 animate-fade-in" style="animation-delay: 0.3s;">
+<div class="sticky top-32 space-y-6">
+<!-- AI Suggestions -->
+<div class="glass-surface p-6 rounded-xl relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-secondary"></div>
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-secondary">auto_awesome</span>
+<h4 class="font-label-caps text-label-caps text-on-surface uppercase tracking-wider">AI Suggestions</h4>
+</div>
+<div class="space-y-6">
+<div>
+<h5 class="text-[12px] font-semibold text-secondary uppercase mb-2">Recommended Materials</h5>
+<div class="flex flex-wrap gap-2">
+<span class="px-2 py-1 text-[10px] bg-white/5 border border-white/10 rounded text-on-surface-variant">Travertine Stone</span>
+<span class="px-2 py-1 text-[10px] bg-white/5 border border-white/10 rounded text-on-surface-variant">Smoked Oak</span>
+<span class="px-2 py-1 text-[10px] bg-white/5 border border-white/10 rounded text-on-surface-variant">Brushed Brass</span>
+</div>
+</div>
+<div>
+<h5 class="text-[12px] font-semibold text-secondary uppercase mb-2">Suggested Color Harmony</h5>
+<div class="flex items-center gap-1 h-8 rounded-md overflow-hidden">
+<div class="flex-1 h-full bg-[#1A1A1A]" title="Onyx"></div>
+<div class="flex-1 h-full bg-[#D4C5A9]" title="Champagne Gold"></div>
+<div class="flex-1 h-full bg-[#E5E5E5]" title="Soft White"></div>
+<div class="flex-1 h-full bg-[#524B3E]" title="Umber"></div>
+</div>
+<p class="text-[11px] text-white/40 mt-2 italic">A curated palette inspired by your selections and the 'Metropolitan Silk' theme.</p>
+</div>
+<div class="p-4 bg-secondary/5 rounded-lg border border-secondary/10">
+<h5 class="text-[12px] font-semibold text-secondary uppercase mb-2">Space Optimization Tip</h5>
+<p class="text-[11px] text-on-surface-variant leading-relaxed">Consider a circular dining arrangement to enhance the fluid architectural lines of your uploaded room scan.</p>
+</div>
+</div>
+</div>
+<!-- Room Preview Summary -->
+<div class="glass-surface rounded-xl overflow-hidden group">
+<div class="relative h-48 w-full">
+<div class="bg-cover bg-center w-full h-full transition-transform duration-700 group-hover:scale-110" data-alt="A cinematic, high-end architectural rendering of a minimalist modern living room during golden hour. Large floor-to-ceiling windows reveal a serene skyline. The room features a dark textured wall, a plush cream sofa, and subtle champagne gold accents. Professional architectural photography style with deep shadows and soft ambient lighting." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBnrlyuSaBVxdxuKI9gH_0-4aKVSvQ1SjzZHquRbCMORPYsOQf_O_z2zjowsJpzJvcUxKMe6UAcHGiNf0DKTCwodT-ulNGy_GZlxiXX2PAnKdYLJddcFEP8L50z1vMTXJY3CBZj3zWjk3fT329rjoz0g9_ZiJCer4xP6r9T3n7nX0LW6NObP083x2l5PVQTqvi4wcAvN11uN60yuqf10SzZp4jsWEoXbJ_tsEuIxBiu2ZSjCj_SnC9NnuQY-eaXDSLnjU2GovyYors')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-background to-transparent"></div>
+<div class="absolute bottom-4 left-4">
+<span class="text-[10px] font-label-caps text-secondary uppercase tracking-widest bg-background/60 backdrop-blur-md px-2 py-1 rounded">Current Project</span>
+<h4 class="text-on-surface font-semibold mt-1">Metropolitan Penthouse</h4>
+</div>
+</div>
+<div class="p-5 flex justify-between items-center text-[11px] border-t border-white/5">
+<span class="text-on-surface-variant">Area: 420 sq. ft.</span>
+<span class="text-on-surface-variant">Style: Mid-Century Modern</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- BOTTOM NAVIGATION -->
+<footer class="fixed bottom-0 right-0 left-64 h-24 bg-surface-container-lowest/90 backdrop-blur-3xl border-t border-white/5 z-40 flex items-center justify-between px-margin-desktop">
+<button class="flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors font-label-caps text-label-caps">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+                Select Style
+            </button>
+<div class="flex items-center gap-4">
+<span class="text-on-surface-variant text-[12px] italic">Step 3 of 5</span>
+<button class="px-10 py-4 bg-secondary text-on-secondary font-label-caps text-label-caps rounded-sm gold-glow gold-glow-hover transition-all duration-300 flex items-center gap-3 active:scale-95 group">
+                    Generate Design
+                    <span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">auto_fix</span>
+</button>
+</div>
+</footer>
+</main>
+<!-- MICRO-INTERACTIONS & AMBIENCE -->
+<script>
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Hover effect for multi-select chips
+        const chips = document.querySelectorAll('button.font-label-sm');
+        chips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                const isSelected = chip.classList.contains('border-secondary');
+                if (isSelected) {
+                    chip.classList.remove('border-secondary', 'text-secondary', 'bg-secondary/10');
+                    chip.classList.add('border-white/10', 'text-on-surface-variant');
+                } else {
+                    chip.classList.add('border-secondary', 'text-secondary', 'bg-secondary/10');
+                    chip.classList.remove('border-white/10', 'text-on-surface-variant');
+                }
+            });
+        });
+
+        // Toggle logic for card selections (Furniture/Lighting)
+        const setupRadioCards = (container) => {
+            const cards = container.querySelectorAll('.glass-card-hover');
+            cards.forEach(card => {
+                card.addEventListener('click', () => {
+                    cards.forEach(c => {
+                        c.classList.remove('border-secondary', 'bg-secondary/5');
+                        c.classList.add('border-white/5');
+                        const icon = c.querySelector('.material-symbols-outlined');
+                        const label = c.querySelector('p');
+                        icon.classList.remove('text-secondary');
+                        icon.classList.add('text-on-surface-variant');
+                        icon.style.fontVariationSettings = "'FILL' 0";
+                        label.classList.remove('text-secondary');
+                        label.classList.add('text-on-surface-variant');
+                    });
+                    card.classList.add('border-secondary', 'bg-secondary/5');
+                    card.classList.remove('border-white/5');
+                    const activeIcon = card.querySelector('.material-symbols-outlined');
+                    const activeLabel = card.querySelector('p');
+                    activeIcon.classList.add('text-secondary');
+                    activeIcon.classList.remove('text-on-surface-variant');
+                    activeIcon.style.fontVariationSettings = "'FILL' 1";
+                    activeLabel.classList.add('text-secondary');
+                    activeLabel.classList.remove('text-on-surface-variant');
+                });
+            });
+        };
+
+        // Initialize cards
+        document.querySelectorAll('section').forEach(section => {
+            if (section.querySelector('.grid-cols-2')) {
+                setupRadioCards(section);
+            }
+        });
+    </script>
+
+<!-- AETHER_WIRED -->
+<script src="../shared/aether.js" defer></script>
+</body></html>

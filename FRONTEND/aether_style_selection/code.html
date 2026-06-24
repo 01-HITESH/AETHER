@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AETHER | Style Selection</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#e4e2e4",
+                        "on-error": "#690005",
+                        "surface-dim": "#131315",
+                        "on-secondary": "#382f1c",
+                        "secondary-fixed-dim": "#d4c5a9",
+                        "error": "#ffb4ab",
+                        "on-primary-fixed-variant": "#474646",
+                        "surface": "#131315",
+                        "on-secondary-fixed": "#221b09",
+                        "secondary-fixed": "#f1e1c4",
+                        "background": "#131315",
+                        "on-primary": "#313030",
+                        "primary": "#c8c6c5",
+                        "on-tertiary-container": "#7c7d7f",
+                        "surface-container-high": "#2a2a2c",
+                        "tertiary-container": "#101214",
+                        "outline": "#8e9192",
+                        "secondary-container": "#504630",
+                        "on-tertiary-fixed-variant": "#454749",
+                        "error-container": "#93000a",
+                        "on-tertiary-fixed": "#1a1c1d",
+                        "on-background": "#e4e2e4",
+                        "on-tertiary": "#2f3132",
+                        "on-primary-fixed": "#1c1b1b",
+                        "surface-bright": "#39393b",
+                        "secondary": "#d4c5a9",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "on-secondary-container": "#c2b498",
+                        "on-primary-container": "#7e7d7d",
+                        "tertiary": "#c6c6c8",
+                        "inverse-on-surface": "#303032",
+                        "primary-container": "#121212",
+                        "surface-container-lowest": "#0e0e10",
+                        "on-secondary-fixed-variant": "#504630",
+                        "outline-variant": "#444748",
+                        "surface-container-low": "#1b1b1d",
+                        "surface-tint": "#c8c6c5",
+                        "tertiary-fixed": "#e2e2e4",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed": "#e5e2e1",
+                        "on-surface-variant": "#c4c7c7",
+                        "tertiary-fixed-dim": "#c6c6c8",
+                        "on-surface": "#e4e2e4",
+                        "surface-container-highest": "#353437",
+                        "inverse-primary": "#5f5e5e",
+                        "surface-container": "#1f1f21",
+                        "surface-variant": "#353437"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "8px",
+                        "margin-mobile": "20px",
+                        "container-max": "1440px",
+                        "gutter": "24px",
+                        "margin-desktop": "64px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "display-lg-mobile": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["32px", {"lineHeight": "40px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "label-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "letterSpacing": "0em", "fontWeight": "400"}],
+                        "display-lg-mobile": ["40px", {"lineHeight": "48px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "display-lg": ["64px", {"lineHeight": "72px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400"}],
+                        "headline-sm": ["24px", {"lineHeight": "32px", "letterSpacing": "0.01em", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #131315;
+            color: #e4e2e4;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(212, 197, 169, 0.3);
+            transform: translateY(-4px);
+        }
+        .style-selected {
+            border: 1px solid #d4c5a9 !important;
+            background: rgba(212, 197, 169, 0.08) !important;
+            box-shadow: 0 0 20px rgba(212, 197, 169, 0.05);
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #131315;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a2a2c;
+            border-radius: 10px;
+        }
+        .step-active { color: #d4c5a9; }
+        .step-complete { color: #e4e2e4; }
+        .step-pending { color: #444748; }
+    </style>
+</head>
+<body class="bg-background text-on-background">
+<!-- Sidebar (Shared Component Anchor) -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-white/10 bg-background/80 backdrop-blur-xl z-50 flex flex-col p-8 transition-all duration-300 ease-in-out">
+<div class="mb-12">
+<h1 class="font-display-lg text-primary tracking-widest text-[28px] font-extrabold mb-1">AETHER</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant opacity-60">Architectural AI</p>
+</div>
+<nav class="flex-grow space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-sm text-label-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary font-bold bg-secondary/10 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">add_box</span>
+<span class="font-label-sm text-label-sm">New Design</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">folder_open</span>
+<span class="font-label-sm text-label-sm">My Projects</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">bookmark</span>
+<span class="font-label-sm text-label-sm">Saved Designs</span>
+</a>
+</nav>
+<div class="mt-auto pt-8 border-t border-white/5 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-sm text-label-sm">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-sm text-label-sm">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="ml-64 min-h-screen relative overflow-y-auto">
+<!-- Top Navigation / Progress -->
+<header class="sticky top-0 z-40 bg-background/40 backdrop-blur-md px-12 py-6 border-b border-white/5 flex items-center justify-between">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded-full bg-secondary text-on-secondary flex items-center justify-center text-[12px]">
+<span class="material-symbols-outlined !text-[14px]">check</span>
+</div>
+<span class="font-label-sm text-label-sm step-complete">Upload</span>
+</div>
+<div class="w-8 h-[1px] bg-white/10"></div>
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded-full border border-secondary text-secondary flex items-center justify-center text-[12px] font-bold">2</div>
+<span class="font-label-sm text-label-sm step-active">Select Style</span>
+</div>
+<div class="w-8 h-[1px] bg-white/10"></div>
+<div class="flex items-center gap-3 opacity-40">
+<div class="w-6 h-6 rounded-full border border-on-surface-variant flex items-center justify-center text-[12px]">3</div>
+<span class="font-label-sm text-label-sm step-pending">Details</span>
+</div>
+<div class="w-8 h-[1px] bg-white/10"></div>
+<div class="flex items-center gap-3 opacity-40">
+<div class="w-6 h-6 rounded-full border border-on-surface-variant flex items-center justify-center text-[12px]">4</div>
+<span class="font-label-sm text-label-sm step-pending">Generate</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined p-2 hover:bg-white/5 rounded-full transition-colors text-on-surface-variant">notifications</button>
+<div class="w-10 h-10 rounded-full bg-surface-container-high border border-white/10 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Close-up architectural headshot of a sophisticated user in a high-end dark studio environment, moody lighting, professional and luxurious vibe, dark neutral palette with golden accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9pp4GZ77UU1779poTJm9L30P8ww3qefCf0QFVkT0SZmfwtKsKe809c8aVC6zcMBO14XPRcrpa78zseOFrAgC98LJI4j8o1vZC8vZg14cu3UicUDI5IxUyywDdjWp2W2PUOMjw8UjBYdBRRGuu4DS4zwBOqIfeQjcH__l1e0XEvn5dl4uojaItjY2okVqioUoOkyj7sBVPEje39lWZS0R7D0tZPtrovmMD22mvShp-_HhY7nygzueM1Aszk5Gtb44OaDqfwAtIAQg"/>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<section class="p-12 max-w-[1440px] mx-auto">
+<div class="mb-12">
+<h2 class="font-headline-md text-headline-md mb-2">Choose Your Interior Style</h2>
+<p class="text-on-surface-variant font-body-md text-body-md max-w-2xl">Select the design style that best matches your vision. AETHER's AI will use this as a creative foundation for your architectural transformation.</p>
+</div>
+<!-- Style Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-16">
+<!-- Modern - SELECTED -->
+<div class="glass-panel glass-card style-selected group cursor-pointer p-1 rounded-xl transition-all relative">
+<div class="absolute top-4 right-4 z-10 w-6 h-6 bg-secondary text-on-secondary rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined !text-[14px]">check</span>
+</div>
+<div class="aspect-[4/5] rounded-lg overflow-hidden mb-4">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A high-end modern living room with floor-to-ceiling windows, sleek modular furniture in charcoal and cream, and minimalist lighting fixtures. The atmosphere is sophisticated and quiet, with dramatic play of light and shadow reflecting the luxury architectural AI brand aesthetic of AETHER." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAI3Q8AsNn7YSQH7qKkA1oXiG_MFJ_56ubafFfnAji_jLGnk84zNfgD6Muv0kjgzxDvs63QkxsTUGEHosy3QsvGa5YxQ28gjkfrfOr_TWCejIsoP6CssmbIATGqsaDIV30WIErLjYqFMbVAOy1SZ3uWXwWbzgPaBOrqNR4u4QE4SvA9lWReOUL2MHPGKvyX05_O6ZaR-5oJG_wC7V01a-KoG8NNIxDKAsx2LS_pjUXaR6dWgPk6_GVz4WrVp5NopgC5IBpo4R2W3q8"/>
+</div>
+<div class="px-3 pb-4">
+<h3 class="font-headline-sm text-[18px] mb-1">Modern</h3>
+<p class="text-[12px] text-on-surface-variant leading-relaxed">Clean lines and functional minimalism for the urban dweller.</p>
+</div>
+</div>
+<!-- Minimalist -->
+<div class="glass-panel glass-card group cursor-pointer p-1 rounded-xl transition-all">
+<div class="aspect-[4/5] rounded-lg overflow-hidden mb-4">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="An ultra-minimalist interior space featuring monolithic concrete walls, a single low-profile wooden bench, and soft indirect lighting from a hidden skylight. The scene is peaceful and curated, emphasizing texture and volume over ornamentation, consistent with a high-end architectural design system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2aqna0QBYI9xHNvzuGbf4YmZiTn6INbzQOJqANq9zTzU0JazwUjSwbV8nuWH0xe5cU3KSSBvAZOElSTlNFnH7cHqa-oOnqJvqVgZuO51OuvmRjule9pldiysGWXZMspqCOtKCrFkn0NFyefyfdESRZQxyfrkk4Q-39hsAzPC13CRSCmqTuZ4r3JWi-DgD2DFixdBv3aWPUJ2o1szmooYu9y39uIGSUy1cGdKSS6CUmEXWrdk1bbJl6utoc0bCyJq2R8Vf0qD02iI"/>
+</div>
+<div class="px-3 pb-4">
+<h3 class="font-headline-sm text-[18px] mb-1">Minimalist</h3>
+<p class="text-[12px] text-on-surface-variant leading-relaxed">Stripped back essentials focused on light and pure form.</p>
+</div>
+</div>
+<!-- Luxury -->
+<div class="glass-panel glass-card group cursor-pointer p-1 rounded-xl transition-all">
+<div class="aspect-[4/5] rounded-lg overflow-hidden mb-4">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A luxurious penthouse lounge with marble flooring, gold leaf accents, and velvet upholstery in deep emerald. Elaborate chandeliers provide a warm, opulent glow. The style is grand and aspirational, designed for high-end clientele seeking an elite architectural aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCscmHZOEMi-t91IVkQaBwCe7QZxjGvrN_y4N2xmMrAmG-ycBLgL-gH9Xv9lkaVefsH9plE4eSjTQaxL2cTzF-OZ16kHv7Q-_hu-GtC0mDHQMVaAckl6ZhhZcadJ9kowYGDL-KdjVcbXOmenI2zOWcbALSar3m5sCxS8fH0ekdA07AacuKeC2Et9BDJ57NXlyvj0mt6AU6j-QV5RnF4t3H54OdYb5K0y47m1z7ccrEzj7efgnCPNrUQFxRTEzmGjy8klhQSHGTNsH8"/>
+</div>
+<div class="px-3 pb-4">
+<h3 class="font-headline-sm text-[18px] mb-1">Luxury</h3>
+<p class="text-[12px] text-on-surface-variant leading-relaxed">Opulent materials and grand proportions for an elite finish.</p>
+</div>
+</div>
+<!-- Scandinavian -->
+<div class="glass-panel glass-card group cursor-pointer p-1 rounded-xl transition-all">
+<div class="aspect-[4/5] rounded-lg overflow-hidden mb-4">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A bright Scandinavian living area with light oak wood, cozy textiles, and white walls. Soft northern light pours through large windows. The mood is 'hygge'—warm, inviting, and naturally balanced, following a minimalist architectural philosophy." src="https://lh3.googleusercontent.com/aida-public/AB6AXuASVw_uPLA7ceGnZY9Uy4egap0bu9C0_dAMOOpB9Qp_Mlhsn0Eug-GRHHlSfPmMAuRqSLObyiegt5HQcYH_A29XFDn5qw_L4Q3_kSBOOUoD7ywofYzp5S4I65rll6CIvjgao5HXdMQdHQcNULPoIxEQ5epgmi11KGuizFBTVrr2o8_AI7wWobrJEowk-bOMGnV6SYfdcU3wzOLPGpyU4GzzlfegKsAlZYvRnVkl5y4WnGC83jMAmnB9ZIHTYZIFiYxzly8ozZ5IHYY"/>
+</div>
+<div class="px-3 pb-4">
+<h3 class="font-headline-sm text-[18px] mb-1">Scandinavian</h3>
+<p class="text-[12px] text-on-surface-variant leading-relaxed">Bright, airy spaces with natural wood and cozy textures.</p>
+</div>
+</div>
+<!-- Japanese Zen -->
+<div class="glass-panel glass-card group cursor-pointer p-1 rounded-xl transition-all">
+<div class="aspect-[4/5] rounded-lg overflow-hidden mb-4">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A serene Japanese Zen room with tatami mats, shoji screens, and a small internal rock garden. Natural bamboo and stone elements create a sense of profound tranquility. The lighting is diffused and soft, emphasizing architectural silence and balance." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrk0jvSAumeooqo5_EhAaI0emnEKn-S37TfVsEtVgmljlDIUTK5V9Ls4we0Hf7lWE8u6Px3t2UTHaaCNJxM8eBD-mmr9JgMn_dxyYDEDA9j0ASqPmOVDuDfDt84t7GeTVTdn-EsVw7TFblhHvVFk9dIVfWkvP0C6ef0JrMBgWHye9hrGLY8dAIAfvDDwm7Py7kwQP6IlbhK5Cwoc_-pGx-L0AR7RG6I81gCe4-ThZu9P2eZLw_ZV24CT_u0S46m-9d_LpWZafL_7A"/>
+</div>
+<div class="px-3 pb-4">
+<h3 class="font-headline-sm text-[18px] mb-1">Japanese Zen</h3>
+<p class="text-[12px] text-on-surface-variant leading-relaxed">Tranquility through natural materials and minimalist balance.</p>
+</div>
+</div>
+<!-- Industrial -->
+<div class="glass-panel glass-card group cursor-pointer p-1 rounded-xl transition-all">
+<div class="aspect-[4/5] rounded-lg overflow-hidden mb-4">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A high-ceiling industrial loft with exposed brick walls, steel beams, and polished concrete floors. Oversized pendant lights hang from the ceiling. The vibe is raw, urban, and sophisticated, reflecting modern architectural adaptive reuse trends." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1iOEYVK42WTS5yfageLYw4ySj7YW_suH0ZFd_sNbVpj7Ha7AgGBVLCYk3D9TCeBTHAeSbOhJ_C7Ffc9GrQn5cSKAr9P3zhYDrNAQPLquFaflXtAr0rK9y0emo3PEl7XpZ3nRecUMgW7C4XvEtpVe0T2IpmyZ_Vv695-q6nxHwXRMTnqq0V9R_Oq84bO22kZXOVmUmLfDJMjItdVNqS71p0qLMIdosemwo8u-6I4a5HLOfzWIRp0Uop5rtvxkhvcucmYKITTf_ERM"/>
+</div>
+<div class="px-3 pb-4">
+<h3 class="font-headline-sm text-[18px] mb-1">Industrial</h3>
+<p class="text-[12px] text-on-surface-variant leading-relaxed">Raw elements, exposed structures, and metallic finishes.</p>
+</div>
+</div>
+<!-- Contemporary -->
+<div class="glass-panel glass-card group cursor-pointer p-1 rounded-xl transition-all">
+<div class="aspect-[4/5] rounded-lg overflow-hidden mb-4">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A contemporary interior with bold geometric art, mixed textures, and a neutral color palette with vibrant blue accents. The design feels current and innovative, utilizing the latest in architectural lighting and furniture design." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDbvwP2uW4fmHvfl74tGrBRThYQtf6gCveEjAjiYxNbTs60YcfOiig_Lu_0QFw0S-rRWaaZfC0_GXj80NwAQJPojEaFwgHYmNy2VMxqRjfsdZLnn8lFy3EvXp1aAp2skiYWf4_c76rUN3SMqBaOLQoA5i_OQy_l6-s3B8rDqncuDR_2TOjo-cyHQTUKi1hVGgGYd9uXlHtDldUy23p6AAiW5aIjp_szyN5GqeD_xCXIiGRR92gbPgV_xrI4iMEus8xeh6EUPGnDs0"/>
+</div>
+<div class="px-3 pb-4">
+<h3 class="font-headline-sm text-[18px] mb-1">Contemporary</h3>
+<p class="text-[12px] text-on-surface-variant leading-relaxed">The pulse of the now. Dynamic, artistic, and evolving.</p>
+</div>
+</div>
+<!-- Traditional -->
+<div class="glass-panel glass-card group cursor-pointer p-1 rounded-xl transition-all">
+<div class="aspect-[4/5] rounded-lg overflow-hidden mb-4">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A classic traditional library with dark wood paneling, leather armchairs, and floor-to-ceiling bookshelves. A brass floor lamp provides warm task lighting. The aesthetic is timeless, formal, and deeply rooted in architectural history and craftsmanship." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9cqMi-veBVeRIggvr0WU3_ACRNuMkpXGS2jFlakKhkVjSK91t6RILH24FoGdy0A6_K_sKncSTNiQEx-anxdin-ytrGOpSqpm1-FR4ki2gG-JMrlxUuZkg-PC086PHpaj-9XwprVHgDr0BHddkAX2uguXHWAcdFsTbT7P5QQ0Mfc7smZ42nKgm6PJ2dEY33co3ve270Eb8UNcR0XQIbUM3mf0VRT0oS73-zgzjmm3WT_uVycTbwqXe1Lb8xiPIbPRrZQ1cuEWJxU8"/>
+</div>
+<div class="px-3 pb-4">
+<h3 class="font-headline-sm text-[18px] mb-1">Traditional</h3>
+<p class="text-[12px] text-on-surface-variant leading-relaxed">Timeless elegance, symmetry, and rich historical detail.</p>
+</div>
+</div>
+<!-- Bohemian -->
+<div class="glass-panel glass-card group cursor-pointer p-1 rounded-xl transition-all">
+<div class="aspect-[4/5] rounded-lg overflow-hidden mb-4">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A vibrant Bohemian sunroom filled with lush tropical plants, patterned rugs, and eclectic handmade decor. Soft sunlight filters through sheer curtains. The space is relaxed, creative, and full of life, providing a warm contrast to minimalist architectural forms." src="https://lh3.googleusercontent.com/aida-public/AB6AXuADunxqJyIspiFzYidafNiw2VUJjXJjAbY6VKdd9qBE8ZWdXhCjb5MubONkkXQMAxcx-6Z8_r4vu9hvlecwALMtl6hxKBor9hDeSdmX6pjuSMFzyJt7XrcqgI1y8q6_hhkTmlj4lfk-OkgTjpKaUF9nB3u87gPyHik4ae46_ws76-xXBtrVffUDsZCfo7Bpt9-av-Be_EmBIYMqkewfj-xVelNk9DflCfZX3Qh9xlNTga5kR34yTdN0aaazzzj0a_RwiKZSu8oqmGA"/>
+</div>
+<div class="px-3 pb-4">
+<h3 class="font-headline-sm text-[18px] mb-1">Bohemian</h3>
+<p class="text-[12px] text-on-surface-variant leading-relaxed">Eclectic layers, organic shapes, and lived-in warmth.</p>
+</div>
+</div>
+<!-- Classical -->
+<div class="glass-panel glass-card group cursor-pointer p-1 rounded-xl transition-all">
+<div class="aspect-[4/5] rounded-lg overflow-hidden mb-4">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A grand classical hallway with fluted columns, ornate crown molding, and a vaulted ceiling. The color palette is composed of soft creams and golds. The architecture is symmetrical and dignified, evoking the timeless beauty of Greco-Roman influence." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzPWnz-T--2FXyzzTVZPBCCZvX5BxKbuCXwLa7J0_BqYP6hrVnvM1tcKIjX7iB8Cnfi0e-gtPhIqPcPKImI1Bebhlqb4a_7uYOh8kT8C__5Wmw8CFPwifWdrE_Ipa6Of7AibcYHVFDL4hOs2WxIvJQFIJKGjaAjHXbTa0J5heIQr87qHUlQr_3otqKEQPFWVxjTpc8lIzXVg-HLSVv8OMVmSiklDZqfSIfeqpRoi_vHl-0urRSDlPm071FPl4Z09B2XDKex-2PhBs"/>
+</div>
+<div class="px-3 pb-4">
+<h3 class="font-headline-sm text-[18px] mb-1">Classical</h3>
+<p class="text-[12px] text-on-surface-variant leading-relaxed">Refined proportions and ornate architectural heritage.</p>
+</div>
+</div>
+</div>
+<!-- Recommended Section -->
+<div class="mb-24">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-secondary !text-[20px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<h3 class="font-label-caps text-label-caps text-secondary tracking-[0.2em] uppercase">AI Recommended For You</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="glass-panel p-6 rounded-xl flex items-center gap-4 hover:border-white/20 transition-all cursor-pointer">
+<div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Macro detail of a high-end architectural material sample, fluted walnut wood with a matte finish, reflecting soft ambient studio light. Professional architectural visualization style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwaS06K3Sd6xNv-zzhKnsdK8fJVMCxErc1GqL842v81BcGnYGZAhw05YNccdgwRGW9XVDlhBcOnl-4rsS3HYPsn86eldYbXaR8mjedNxDn3ni7kY4PDVDO2WP_gtKCh85gfyLZq23ovMZiKvavZdtu01heBmAkoBlInzJaRxLxy0wyHqNlh1vn-_4hQyVp5RcS0iMP8_QsroZxGUh-eI7Ln42A7GG6FDLlh2Me7KMbdGj7dUZrLkdpb_ay0AaJmMHn-JCXeqhi_To"/>
+</div>
+<div>
+<h4 class="font-label-sm text-label-sm text-on-surface mb-1">Organic Modernism</h4>
+<p class="text-[11px] text-on-surface-variant">Matches your previous kitchen project.</p>
+</div>
+</div>
+<div class="glass-panel p-6 rounded-xl flex items-center gap-4 hover:border-white/20 transition-all cursor-pointer">
+<div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Architectural lighting detail, a sleek recessed linear light casting a sharp beam against a textured grey stone wall. Dramatic and high-contrast luxury design style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7tij-Za5Az4td7zLhqcygn2w6LyoYYiqmullZOTWxMDrqA-uHOMlgO3Gcmowr9DloF6ytft9ZBHuA8z-zHymhUDsbH5bPpukssNCAWmyGyDtlKuyR0hbR7tmU62I5r040SYIyArJgm7SRC67fM-g-T2kpLbzfgrXOOZQOYUH7imxiN8uh75eqxG-lWBH7oBinCapiZcIdlVHAr-Wmec4k6FukC4aHEuO-movY7vOzqU3yx41ARrIhwCrrF5tlJEbZbSHsVqxwnAQ"/>
+</div>
+<div>
+<h4 class="font-label-sm text-label-sm text-on-surface mb-1">Brutalist Chic</h4>
+<p class="text-[11px] text-on-surface-variant">Trending in your current region.</p>
+</div>
+</div>
+<div class="glass-panel p-6 rounded-xl flex items-center gap-4 hover:border-white/20 transition-all cursor-pointer">
+<div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="A soft-focus interior detail of a neutral linen curtain gently billowing in front of a large window with a blurry city view at dusk. Moody and cinematic atmospheric feel." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvtVXT-1OcKNnnIlXmmpNVWeFeaPLvWHGJVAw2ffIz_bYQ2w4DSFaZKbCPlcZLaV-PXChbI22Xr7wYBvNFPDlIKRPS6KF8-efNc5hWXTQC5vvjN9sKVx9AiHKE1oxn7VqM9PIyV756YdysDVIwR37NmIBXbjZ-AoMvUd__BbkkMk81kxbFP1FDsHgkp3jd0LtsBeLk6JJq-CcJHyq-q8pvzfWj_br_3PbRhZFqLADZJkEoGPLheIFcBEze-0FdvMNeYJL1kxo0ooo"/>
+</div>
+<div>
+<h4 class="font-label-sm text-label-sm text-on-surface mb-1">Soft Minimalism</h4>
+<p class="text-[11px] text-on-surface-variant">Optimal for the light data detected.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Action Bar -->
+<footer class="fixed bottom-0 right-0 left-64 h-24 bg-background/80 backdrop-blur-xl border-t border-white/5 px-12 flex items-center justify-between z-40">
+<button class="flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors font-label-sm text-label-sm">
+<span class="material-symbols-outlined">arrow_back</span>
+                Back
+            </button>
+<div class="flex items-center gap-6">
+<span class="text-[12px] text-on-surface-variant italic">Style Selection: <span class="text-secondary font-bold">Modern</span></span>
+<button class="bg-secondary text-on-secondary px-8 py-3 rounded-full font-label-sm text-label-sm font-bold shadow-lg shadow-secondary/10 hover:shadow-secondary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2">
+                    Continue to Requirements
+                    <span class="material-symbols-outlined !text-[18px]">arrow_forward</span>
+</button>
+</div>
+</footer>
+<!-- Atmospheric Background Element -->
+<div class="fixed top-1/4 -right-1/4 w-[600px] h-[600px] bg-secondary/5 rounded-full blur-[120px] pointer-events-none -z-10"></div>
+<div class="fixed bottom-1/4 -left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none -z-10"></div>
+</main>
+<script>
+        // Simple Interaction logic for Style Selection
+        const cards = document.querySelectorAll('.glass-card');
+        const selectedText = document.querySelector('footer span span');
+
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                // Remove selected class from all
+                cards.forEach(c => {
+                    c.classList.remove('style-selected');
+                    const check = c.querySelector('.absolute.top-4');
+                    if (check) check.remove();
+                });
+                
+                // Add to current
+                card.classList.add('style-selected');
+                const styleName = card.querySelector('h3').innerText;
+                selectedText.innerText = styleName;
+
+                // Create checkmark icon if it doesn't exist
+                const checkmark = document.createElement('div');
+                checkmark.className = 'absolute top-4 right-4 z-10 w-6 h-6 bg-secondary text-on-secondary rounded-full flex items-center justify-center';
+                checkmark.innerHTML = '<span class="material-symbols-outlined !text-[14px]">check</span>';
+                card.appendChild(checkmark);
+            });
+        });
+    </script>
+
+<!-- AETHER_WIRED -->
+<script src="../shared/aether.js" defer></script>
+</body></html>

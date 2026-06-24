@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AETHER | AI Design Generation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-container": "#7c7d7f",
+                        "error": "#ffb4ab",
+                        "error-container": "#93000a",
+                        "on-primary-fixed": "#1c1b1b",
+                        "on-primary-container": "#7e7d7d",
+                        "secondary": "#d4c5a9",
+                        "tertiary-container": "#101214",
+                        "on-error": "#690005",
+                        "outline": "#8e9192",
+                        "on-tertiary-fixed": "#1a1c1d",
+                        "primary-container": "#121212",
+                        "inverse-surface": "#e4e2e4",
+                        "tertiary": "#c6c6c8",
+                        "on-secondary-fixed": "#221b09",
+                        "inverse-on-surface": "#303032",
+                        "surface-bright": "#39393b",
+                        "surface-tint": "#c8c6c5",
+                        "primary": "#c8c6c5",
+                        "on-tertiary": "#2f3132",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "surface-container-highest": "#353437",
+                        "background": "#131315",
+                        "surface-container-low": "#1b1b1d",
+                        "surface-variant": "#353437",
+                        "on-primary-fixed-variant": "#474646",
+                        "secondary-container": "#504630",
+                        "tertiary-fixed-dim": "#c6c6c8",
+                        "on-background": "#e4e2e4",
+                        "surface-dim": "#131315",
+                        "on-secondary-container": "#c2b498",
+                        "secondary-fixed-dim": "#d4c5a9",
+                        "on-surface-variant": "#c4c7c7",
+                        "tertiary-fixed": "#e2e2e4",
+                        "surface-container": "#1f1f21",
+                        "on-secondary": "#382f1c",
+                        "on-tertiary-fixed-variant": "#454749",
+                        "inverse-primary": "#5f5e5e",
+                        "outline-variant": "#444748",
+                        "on-primary": "#313030",
+                        "surface-container-lowest": "#0e0e10",
+                        "surface-container-high": "#2a2a2c",
+                        "primary-fixed": "#e5e2e1",
+                        "on-secondary-fixed-variant": "#504630",
+                        "secondary-fixed": "#f1e1c4",
+                        "on-error-container": "#ffdad6",
+                        "surface": "#131315",
+                        "on-surface": "#e4e2e4"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "8px",
+                        "margin-mobile": "20px",
+                        "margin-desktop": "64px",
+                        "gutter": "24px",
+                        "container-max": "1440px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "display-lg-mobile": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                        "display-lg": ["64px", {"lineHeight": "72px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-sm": ["24px", {"lineHeight": "32px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                        "headline-md": ["32px", {"lineHeight": "40px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "letterSpacing": "0em", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                        "display-lg-mobile": ["40px", {"lineHeight": "48px", "letterSpacing": "0.02em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .scanline {
+            background: linear-gradient(to bottom, transparent, #d4c5a944, transparent);
+            height: 20%;
+            width: 100%;
+            position: absolute;
+            animation: scan 3s linear infinite;
+        }
+        @keyframes scan {
+            from { top: -20%; }
+            to { top: 100%; }
+        }
+        .progress-shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite linear;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .status-pulse {
+            animation: pulse-glow 2s infinite alternate;
+        }
+        @keyframes pulse-glow {
+            from { opacity: 0.4; scale: 0.95; }
+            to { opacity: 1; scale: 1.05; }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden">
+<!-- SideNavBar (Shared Component) -->
+<nav class="bg-surface-container-lowest/80 backdrop-blur-xl h-screen w-64 fixed left-0 top-0 border-r border-white/10 flex flex-col py-8 px-4 z-50">
+<div class="mb-12 px-4">
+<h1 class="font-display-lg text-display-lg-mobile tracking-widest text-secondary uppercase">AETHER</h1>
+<p class="text-on-surface-variant font-label-caps text-label-caps opacity-60">Premium AI Studio</p>
+</div>
+<div class="flex-grow space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-300" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-secondary bg-white/5 border-l-2 border-secondary font-medium transition-all duration-200" href="#">
+<span class="material-symbols-outlined">add_box</span>
+<span class="font-body-md">New Design</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-300" href="#">
+<span class="material-symbols-outlined">folder_open</span>
+<span class="font-body-md">My Projects</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-300" href="#">
+<span class="material-symbols-outlined">bookmark</span>
+<span class="font-body-md">Saved Designs</span>
+</a>
+</div>
+<button class="mt-8 mb-12 mx-2 bg-secondary text-on-secondary-fixed py-3 rounded-full font-label-caps text-label-caps tracking-widest hover:opacity-90 transition-opacity">
+            Generate Concept
+        </button>
+<div class="mt-auto pt-8 border-t border-white/5 space-y-2">
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:text-on-surface transition-colors duration-300" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-label-sm">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:text-on-surface transition-colors duration-300" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="text-label-sm">Support</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="ml-64 h-screen flex flex-col relative overflow-y-auto">
+<!-- Top Navigation Status (Stepper) -->
+<header class="h-20 px-16 flex items-center justify-between border-b border-white/5 shrink-0 bg-surface-dim/40 backdrop-blur-3xl sticky top-0 z-40">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 text-secondary opacity-60">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+<span class="font-label-caps text-label-caps">Upload Room</span>
+</div>
+<div class="w-8 h-px bg-white/10"></div>
+<div class="flex items-center gap-2 text-secondary opacity-60">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+<span class="font-label-caps text-label-caps">Select Style</span>
+</div>
+<div class="w-8 h-px bg-white/10"></div>
+<div class="flex items-center gap-2 text-secondary opacity-60">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+<span class="font-label-caps text-label-caps">Describe Requirements</span>
+</div>
+<div class="w-8 h-px bg-white/10"></div>
+<div class="flex items-center gap-2 text-secondary font-bold">
+<span class="w-5 h-5 rounded-full border-2 border-secondary flex items-center justify-center text-[10px]">4</span>
+<span class="font-label-caps text-label-caps">Generate Design</span>
+</div>
+<div class="w-8 h-px bg-white/10"></div>
+<div class="flex items-center gap-2 text-on-surface-variant opacity-40">
+<span class="w-5 h-5 rounded-full border border-current flex items-center justify-center text-[10px]">5</span>
+<span class="font-label-caps text-label-caps">Explore Results</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex flex-col items-end mr-4">
+<span class="text-on-surface font-label-sm">Studio Architect</span>
+<span class="text-on-surface-variant text-[10px] uppercase tracking-tighter">Pro Account</span>
+</div>
+<div class="w-10 h-10 rounded-full border border-secondary/30 bg-surface-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional studio architectural portrait of a designer in a dark minimalist office setting, low key lighting, high-end professional photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCeXs3FecsbWce70VPeMYzAFzdMp7S9djZFBPU8OPREWLvQ58aSu4DwhrmKXqgW-QnsS1mECsS8KXysIThv0v05_wlsZgxsYJjTDAS15LSAXyFmpgOkLk4XeWAV4i16QG6XVNgaG3NTdh4HjykHf1NdiFk4niFZlnkB3eaD-g6YRkv6ZEXHczcLZb2WiIvwyMEDz9VP5NviHnIWVfC8yy7gb8dobz17u5oS7RUV4bbDQRs198ccuv45Sn-LtmUUBON9djB0JGOwzsE"/>
+</div>
+</div>
+</header>
+<!-- Dynamic Content -->
+<div class="flex-grow flex p-12 gap-12 max-w-[1600px] mx-auto w-full">
+<!-- Central Processing Panel -->
+<div class="flex-[2] flex flex-col gap-8">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-2 tracking-tight">Generating Your Interior Design</h2>
+<p class="text-on-surface-variant text-body-lg max-w-2xl">Our AI is analyzing your room and creating realistic design concepts.</p>
+</div>
+<div class="glass-panel rounded-xl overflow-hidden flex flex-col md:flex-row h-[500px]">
+<!-- Left: Image Preview -->
+<div class="relative flex-1 bg-surface-container-lowest overflow-hidden">
+<img alt="Uploaded Room" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AP1WRLt6HHz71rm9ePHS2RpzX8BZaLliou2okiKPHvmO8s8O5vyGPfuGO-P7cud6z3gSmAQvuvPKH25QQatNohewnw4n4vb92l9bpuoN5k0rexxl4-Zez03QqAj3Wa_KSMNG6uwfasfymYyrCdo3L2VEMuIbqwxgZSAoO2ZnFarDWgA37rRs3357ED5mGxinyeYF4wg3ZwxQf5c0Kk-ahHIEMjgTvia6Mp8RZIGbeZFWnTgEysjbnYEqHWgj"/>
+<div class="scanline"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent flex flex-col justify-end p-6">
+<span class="text-secondary font-label-caps text-label-caps mb-1">Source Input</span>
+<h3 class="text-on-surface font-headline-sm">Empty Living Space</h3>
+</div>
+</div>
+<!-- Right: Generation Status -->
+<div class="flex-1 p-8 flex flex-col bg-white/5 border-l border-white/5">
+<h4 class="text-on-surface font-label-caps text-label-caps opacity-60 mb-8 uppercase tracking-widest">Processing Stack</h4>
+<ul class="space-y-6">
+<li class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">Analyzing Room Structure</span>
+<span class="text-on-surface-variant text-[12px]">Wireframe &amp; geometry mapping complete</span>
+</div>
+</li>
+<li class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">Detecting Furniture and Layout</span>
+<span class="text-on-surface-variant text-[12px]">Clearance and pathing optimized</span>
+</div>
+</li>
+<li class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">Applying Selected Design Style</span>
+<span class="text-on-surface-variant text-[12px]">Modern minimalist palette loaded</span>
+</div>
+</li>
+<li class="flex items-center gap-4">
+<div class="w-6 h-6 flex items-center justify-center">
+<span class="material-symbols-outlined animate-spin text-secondary">sync</span>
+</div>
+<div class="flex flex-col">
+<span class="text-on-surface font-semibold">Generating Photorealistic Interior</span>
+<span class="text-secondary text-[12px] italic">Processing textures and global illumination...</span>
+</div>
+</li>
+</ul>
+<div class="mt-auto">
+<div class="flex justify-between items-end mb-3">
+<span class="text-on-surface-variant font-label-caps text-label-caps">Total Progress</span>
+<span class="text-secondary font-headline-sm">72%</span>
+</div>
+<div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden relative">
+<div class="h-full bg-secondary w-[72%] rounded-full relative overflow-hidden">
+<div class="absolute inset-0 progress-shimmer"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- AI Activity Feed -->
+<div class="glass-panel p-6 rounded-xl">
+<h5 class="text-on-surface-variant font-label-caps text-label-caps mb-4 uppercase tracking-tighter">AI Core Log</h5>
+<div class="space-y-3 font-mono text-[13px] opacity-80" id="activity-feed">
+<div class="flex gap-4 text-on-surface-variant">
+<span class="text-secondary/40">14:02:44</span>
+<span>Applying lighting simulation...</span>
+</div>
+<div class="flex gap-4 text-on-surface-variant">
+<span class="text-secondary/40">14:02:47</span>
+<span>Refining reflection probes on glass surfaces...</span>
+</div>
+<div class="flex gap-4 text-secondary">
+<span class="text-secondary/40">14:02:49</span>
+<span class="flex items-center gap-1">
+<span class="status-pulse w-1 h-1 bg-secondary rounded-full"></span>
+                                Rendering final design (High-Fidelity)
+                            </span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Detail Panel -->
+<aside class="w-80 flex flex-col gap-6">
+<div class="glass-panel p-8 rounded-xl">
+<h3 class="text-on-surface font-label-caps text-label-caps mb-6 uppercase tracking-widest border-b border-white/5 pb-4">Generation Details</h3>
+<div class="space-y-8">
+<div>
+<span class="block text-on-surface-variant text-[11px] uppercase tracking-widest mb-1 opacity-60">Room Type</span>
+<span class="text-secondary font-headline-sm">Living Room</span>
+</div>
+<div>
+<span class="block text-on-surface-variant text-[11px] uppercase tracking-widest mb-1 opacity-60">Design Style</span>
+<span class="text-secondary font-headline-sm">Modern Style</span>
+</div>
+<div>
+<span class="block text-on-surface-variant text-[11px] uppercase tracking-widest mb-1 opacity-60">Investment Tier</span>
+<span class="text-secondary font-headline-sm">Premium Budget</span>
+</div>
+<div>
+<span class="block text-on-surface-variant text-[11px] uppercase tracking-widest mb-1 opacity-60">Key Feature</span>
+<span class="text-secondary font-headline-sm">Natural Light</span>
+</div>
+</div>
+</div>
+<div class="glass-panel p-6 rounded-xl border-dashed border-secondary/20">
+<p class="text-on-surface-variant text-label-sm italic text-center">Estimated completion time: 14 seconds</p>
+</div>
+</aside>
+</div>
+<!-- Footer Actions -->
+<footer class="h-24 px-16 flex items-center border-t border-white/5 shrink-0 bg-surface-dim/20 backdrop-blur-md mt-auto">
+<button class="flex items-center gap-2 text-on-surface-variant hover:text-error transition-colors px-6 py-3 rounded-lg hover:bg-error/5 group">
+<span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">close</span>
+<span class="font-label-caps text-label-caps">Cancel Generation</span>
+</button>
+<div class="ml-auto flex items-center gap-6">
+<span class="text-on-surface-variant text-[12px] opacity-40">Auto-saving to cloud...</span>
+<button class="px-8 py-3 bg-white/5 text-on-surface-variant rounded-full font-label-caps text-label-caps opacity-50 cursor-not-allowed" disabled="">
+                    View Results
+                </button>
+</div>
+</footer>
+</main>
+<script>
+        // Micro-interactions for the activity feed to simulate "live" logs
+        const logLines = [
+            "Calculating shadow occlusion...",
+            "Simulating HDR environment maps...",
+            "Applying material roughness to fabric textures...",
+            "Optimizing light bounce in corners...",
+            "Finalizing post-processing effects..."
+        ];
+        
+        let currentIdx = 0;
+        const feed = document.getElementById('activity-feed');
+
+        function addLog() {
+            if(currentIdx >= logLines.length) return;
+            
+            const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+            const line = document.createElement('div');
+            line.className = 'flex gap-4 text-on-surface-variant opacity-0 transform translate-y-2 transition-all duration-500';
+            line.innerHTML = `<span class="text-secondary/40">${time}</span><span>${logLines[currentIdx]}</span>`;
+            
+            feed.appendChild(line);
+            setTimeout(() => {
+                line.classList.remove('opacity-0', 'translate-y-2');
+            }, 50);
+            
+            currentIdx++;
+            setTimeout(addLog, Math.random() * 2000 + 1000);
+        }
+
+        setTimeout(addLog, 2000);
+    </script>
+
+<!-- AETHER_WIRED -->
+<script src="../shared/aether.js" defer></script>
+</body></html>

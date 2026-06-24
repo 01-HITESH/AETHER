@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AETHER - AI Architectural Design</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-fixed": "#e5e2e1",
+                      "tertiary-fixed": "#e2e2e4",
+                      "tertiary-container": "#101214",
+                      "surface-container": "#1f1f21",
+                      "surface-dim": "#131315",
+                      "on-primary": "#313030",
+                      "inverse-surface": "#e4e2e4",
+                      "surface-container-lowest": "#0e0e10",
+                      "primary-fixed-dim": "#c8c6c5",
+                      "on-tertiary-fixed-variant": "#454749",
+                      "background": "#131315",
+                      "surface": "#131315",
+                      "outline": "#8e9192",
+                      "surface-tint": "#c8c6c5",
+                      "tertiary-fixed-dim": "#c6c6c8",
+                      "on-tertiary-fixed": "#1a1c1d",
+                      "on-tertiary": "#2f3132",
+                      "error-container": "#93000a",
+                      "surface-container-high": "#2a2a2c",
+                      "on-tertiary-container": "#7c7d7f",
+                      "surface-variant": "#353437",
+                      "on-secondary-fixed-variant": "#504630",
+                      "error": "#ffb4ab",
+                      "inverse-primary": "#5f5e5e",
+                      "tertiary": "#c6c6c8",
+                      "on-secondary": "#382f1c",
+                      "on-surface-variant": "#c4c7c7",
+                      "secondary-container": "#504630",
+                      "surface-container-low": "#1b1b1d",
+                      "on-primary-fixed": "#1c1b1b",
+                      "secondary-fixed": "#f1e1c4",
+                      "on-error": "#690005",
+                      "on-error-container": "#ffdad6",
+                      "outline-variant": "#444748",
+                      "on-background": "#e4e2e4",
+                      "on-secondary-container": "#c2b498",
+                      "inverse-on-surface": "#303032",
+                      "primary-container": "#121212",
+                      "on-surface": "#e4e2e4",
+                      "on-primary-fixed-variant": "#474646",
+                      "surface-bright": "#39393b",
+                      "surface-container-highest": "#353437",
+                      "on-secondary-fixed": "#221b09",
+                      "primary": "#c8c6c5",
+                      "secondary-fixed-dim": "#d4c5a9",
+                      "secondary": "#d4c5a9",
+                      "on-primary-container": "#7e7d7d"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-desktop": "64px",
+                      "gutter": "24px",
+                      "unit": "8px",
+                      "margin-mobile": "20px",
+                      "container-max": "1440px"
+              },
+              "fontFamily": {
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "display-lg-mobile": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "headline-sm": [
+                              "Inter"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "label-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.01em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg": [
+                              "64px",
+                              {
+                                      "lineHeight": "72px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg-mobile": [
+                              "40px",
+                              {
+                                      "lineHeight": "48px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "letterSpacing": "0em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-sm": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "0.01em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.1em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "0em",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* Ambient Glow & Depth Utilities */
+        .glass-pane {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .primary-button {
+            background-color: theme('colors.secondary');
+            color: theme('colors.on-secondary');
+            transition: all 0.5s ease;
+        }
+        
+        .primary-button:hover {
+            box-shadow: 0 0 40px rgba(212, 197, 169, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .outline-button {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid theme('colors.outline-variant');
+            color: theme('colors.on-surface');
+            transition: all 0.3s ease;
+        }
+
+        .outline-button:hover {
+            border-color: theme('colors.secondary');
+            background: rgba(212, 197, 169, 0.1);
+        }
+
+        /* Scroll Animation Utilities */
+        .scroll-container {
+            height: 300vh; /* creates scroll depth */
+            position: relative;
+        }
+
+        .sticky-wrapper {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-sequence {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.1s ease-out;
+            will-change: opacity;
+        }
+
+        #img-1 { opacity: 1; z-index: 1; }
+        #img-2 { z-index: 2; }
+        #img-3 { z-index: 3; }
+
+        .overlay-content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            max-width: 800px;
+            padding: 0 24px;
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+            will-change: opacity, transform;
+        }
+
+        /* Spotlight Effect */
+        .spotlight-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            background: radial-gradient(
+                circle 800px at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                rgba(0, 0, 0, 0) 0%, 
+                rgba(18, 18, 18, 0.8) 100%
+            );
+            pointer-events: none;
+            transition: background 0.1s ease;
+        }
+
+        /* Initial Load Animations */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-up {
+            animation: fadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+        .delay-300 { animation-delay: 300ms; }
+        .delay-400 { animation-delay: 400ms; }
+
+        /* Dark overlay to ensure text legibility */
+        .base-dim {
+            position: absolute;
+            inset: 0;
+            background-color: rgba(18, 18, 18, 0.4);
+            z-index: 4;
+        }
+      </style>
+</head>
+<body class="antialiased font-body-md text-body-md">
+<!-- TopNavBar (Shared Component JSON Integration) -->
+<nav class="bg-transparent backdrop-blur-xl text-secondary font-label-caps text-label-caps fixed top-0 w-full border-b border-white/10 z-50 flex justify-between items-center px-margin-desktop py-6 max-w-container-max mx-auto left-0 right-0">
+<!-- Brand Logo -->
+<div class="text-headline-sm font-headline-sm tracking-tighter text-on-surface">
+            AETHER
+        </div>
+<!-- Desktop Navigation -->
+<div class="hidden md:flex items-center gap-8">
+<a class="text-secondary border-b border-secondary pb-1 hover:opacity-80 transition-all duration-500 ease-in-out" href="#">Styles</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors hover:opacity-80 duration-500 ease-in-out" href="#">Pricing</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors hover:opacity-80 duration-500 ease-in-out" href="#">Showcase</a>
+</div>
+<!-- Trailing Action -->
+<button class="primary-button px-6 py-3 rounded-full font-label-sm text-label-sm tracking-wide hidden md:block">
+            Start Designing
+        </button>
+<!-- Mobile Menu Toggle (Minimal) -->
+<button class="md:hidden text-on-surface">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</nav>
+<!-- Scroll-Driven Hero Section -->
+<main class="scroll-container" id="hero-scroll-container">
+<div class="sticky-wrapper" id="sticky-hero">
+<!-- Image Sequence Container -->
+<div class="absolute inset-0 w-full h-full">
+<!-- Frame 1: Empty Room -->
+<div class="image-sequence bg-cover bg-center" id="img-1" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD1gXdRM1cqI0ijMq5ycC6TSRndX5CHV92YagLL_H6cIrmQgi8qsf7BXV6YrNalkIYtRH3v5Zn4FlPziJUKtSkRDbSuXepg8EjYAbmzE8vLy24ZjQk3c7B7fQ1kv483UiEPKroH4yQJt-qVqjuiYieE_DVLBMTwHZHabW3rtI0QEFsl_n9VINsHKRT_h_h3S_RoEsz7juoQQ-84TvUAYb2PvPC_KS-3LId47opNuFdyOetAf-LYf0xJYnVtasgQmJvYm0Yb08DG10Q')"></div>
+<!-- Frame 2: Partial Furnishing -->
+<div class="image-sequence bg-cover bg-center" id="img-2" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB22aBhc-HeBdT3srex3BTEtI08UIbfHA7rkHUMb9Ls5KcNRIgRhhKOt9uXhZfm3tAmIOxJQKqSpUL8dbgo6g-uK0_qdIdu9SCdNLIIMtEfbmkSyIWlUWbRdKiWaHLErNDtvhBD39UabnvWnuPJ9NpfpUlsySd8MxotUZnuVlnKO8PhXly3lXk6oPPIj0TPWiW-2hrAYcmo-CSk_ho8-YnSR9ons_VKLi6w0ibT5r3VcmTjx83rVum6fLpbf3T5_rF9UxxSb9VRN6s')"></div>
+<!-- Frame 3: Fully Designed -->
+<div class="image-sequence bg-cover bg-center" id="img-3" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDPQgAkqny-FIQDS3GsIlkjiWMDMWgtUrr_5L6E1dScqjKxEq_XCaKwnTxWQfDEglJQ2CtDqihwfgX-rAnDn8B2ZCe6VFVdHanxLErdI5LlTf_X5YdjJPXffB0c_HM3uJbyyYVkeXe05fLLxXoadTpkUOax9hllzkA1iya0dWaDgLlxcoNVAXxyecTrXfeh87MlVFtZbHQjPlC9arLuiIoHIhgBf7it3Bn_Lhr3RF3UiNNpY6DsgxE3qSLbCrFtEiM9tRVO2SLm9Bs')"></div>
+</div>
+<!-- Dimming Layer & Spotlight -->
+<div class="base-dim"></div>
+<div class="spotlight-overlay" id="spotlight"></div>
+<!-- Centered Overlay Content -->
+<div class="overlay-content flex flex-col items-center justify-center gap-8" id="hero-content">
+<h1 class="font-display-lg text-display-lg md:text-display-lg text-on-surface animate-fade-up tracking-tight leading-tight">
+                    Transform Any Room Into Your <span class="text-secondary italic font-light">Dream Interior</span>
+</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl animate-fade-up delay-100">
+                    Upload a room image, choose your style, and let AI generate immersive 3D interior designs with interactive 360° walkthroughs.
+                </p>
+<!-- Action Bar (Glassmorphism Step Indicator) -->
+<div class="glass-pane rounded-full px-6 py-4 flex items-center justify-between gap-4 mt-4 animate-fade-up delay-200 overflow-hidden w-full max-w-3xl">
+<div class="flex items-center gap-2 text-primary-fixed-dim font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[18px]">photo_camera</span>
+<span class="hidden sm:inline">Upload Room</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-[16px]">arrow_forward</span>
+<div class="flex items-center gap-2 text-primary-fixed-dim font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[18px]">palette</span>
+<span class="hidden sm:inline">Choose Style</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-[16px]">arrow_forward</span>
+<div class="flex items-center gap-2 text-secondary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[18px]">smart_toy</span>
+<span class="hidden sm:inline">AI Generate</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-[16px]">arrow_forward</span>
+<div class="flex items-center gap-2 text-primary-fixed-dim font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[18px]">360</span>
+<span class="hidden sm:inline">Explore 3D</span>
+</div>
+</div>
+<!-- CTA Buttons -->
+<div class="flex flex-col sm:flex-row gap-4 mt-8 animate-fade-up delay-300 w-full sm:w-auto">
+<button class="primary-button px-8 py-4 rounded-full font-label-sm text-label-sm tracking-wide w-full sm:w-auto flex items-center justify-center gap-2">
+                        Start Designing
+                        <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+<button class="outline-button px-8 py-4 rounded-full font-label-sm text-label-sm tracking-wide w-full sm:w-auto">
+                        View Demo
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- Additional Content Canvas Placeholder (To allow scrolling past hero) -->
+<section class="min-h-screen bg-surface-container-lowest py-24 px-margin-desktop relative z-20" style="margin-top: -100vh; padding-top: 100vh;">
+<div class="max-w-container-max mx-auto mt-24">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<div class="md:col-span-8 md:col-start-3 text-center">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-6">Redefining Space with Artificial Intelligence</h2>
+<p class="text-on-surface-variant font-body-lg text-body-lg">Scroll back up to experience the transformation sequence. The deep architectural integration allows for seamless iteration of spaces, materials, and light.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer (Shared Component JSON Integration) -->
+<footer class="bg-surface-container-lowest text-tertiary-fixed-dim font-label-sm text-label-sm w-full py-12 border-t border-outline-variant flex flex-col md:flex-row justify-between items-center px-margin-desktop gap-gutter relative z-20">
+<div class="font-headline-sm text-headline-sm text-on-surface">
+            AETHER
+        </div>
+<div class="flex gap-6">
+<a class="text-on-tertiary-container hover:text-primary transition-colors" href="#">Privacy</a>
+<a class="text-on-tertiary-container hover:text-primary transition-colors" href="#">Terms</a>
+<a class="text-on-tertiary-container hover:text-primary transition-colors" href="#">Contact</a>
+<a class="text-on-tertiary-container hover:text-primary transition-colors" href="#">Press</a>
+</div>
+<div class="text-on-tertiary-container text-center md:text-right">
+            © 2024 AETHER ARCHITECTURAL AI. ALL RIGHTS RESERVED.
+        </div>
+</footer>
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('hero-scroll-container');
+            const img1 = document.getElementById('img-1');
+            const img2 = document.getElementById('img-2');
+            const img3 = document.getElementById('img-3');
+            const content = document.getElementById('hero-content');
+            const spotlight = document.getElementById('spotlight');
+            
+            // Spotlight Effect
+            document.addEventListener('mousemove', (e) => {
+                const x = (e.clientX / window.innerWidth) * 100;
+                const y = (e.clientY / window.innerHeight) * 100;
+                spotlight.style.setProperty('--mouse-x', `${x}%`);
+                spotlight.style.setProperty('--mouse-y', `${y}%`);
+            });
+
+            // Scroll Animation Logic
+            window.addEventListener('scroll', () => {
+                const rect = container.getBoundingClientRect();
+                const scrollY = -rect.top; 
+                const containerHeight = rect.height - window.innerHeight;
+                
+                // Calculate scroll progress (0 to 1)
+                let progress = Math.max(0, Math.min(1, scrollY / containerHeight));
+
+                // 1. Fade out text early (0% to 30% scroll)
+                let textOpacity = 1;
+                let textTransform = 0;
+                if (progress < 0.3) {
+                    textOpacity = 1 - (progress / 0.3);
+                    textTransform = -(progress / 0.3) * 50; // slide up slightly
+                } else {
+                    textOpacity = 0;
+                    textTransform = -50;
+                }
+                
+                content.style.opacity = textOpacity;
+                content.style.transform = `translateY(${textTransform}px)`;
+
+                // 2. Image Sequence Crossfade
+                // Sequence timeline:
+                // 0.0 - 0.3: Img1 visible
+                // 0.3 - 0.6: Crossfade Img1 -> Img2
+                // 0.6 - 1.0: Crossfade Img2 -> Img3
+
+                if (progress < 0.3) {
+                    img1.style.opacity = 1;
+                    img2.style.opacity = 0;
+                    img3.style.opacity = 0;
+                } else if (progress >= 0.3 && progress < 0.6) {
+                    // fade 2 in
+                    let fadeProgress = (progress - 0.3) / 0.3;
+                    img1.style.opacity = 1 - fadeProgress;
+                    img2.style.opacity = fadeProgress;
+                    img3.style.opacity = 0;
+                } else if (progress >= 0.6) {
+                    // fade 3 in
+                    let fadeProgress = (progress - 0.6) / 0.4; // remaining 40%
+                    img1.style.opacity = 0;
+                    img2.style.opacity = 1 - fadeProgress;
+                    img3.style.opacity = fadeProgress;
+                }
+            });
+        });
+    </script>
+
+<!-- AETHER_WIRED -->
+<script src="../shared/aether.js" defer></script>
+</body></html>

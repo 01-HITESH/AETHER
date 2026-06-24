@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AETHER | Explore Results</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#353437",
+                        "inverse-surface": "#e4e2e4",
+                        "background": "#131315",
+                        "surface-bright": "#39393b",
+                        "on-tertiary-container": "#7c7d7f",
+                        "on-background": "#e4e2e4",
+                        "on-primary": "#313030",
+                        "on-primary-fixed-variant": "#474646",
+                        "on-tertiary-fixed": "#1a1c1d",
+                        "on-primary-fixed": "#1c1b1b",
+                        "on-error": "#690005",
+                        "surface-container-lowest": "#0e0e10",
+                        "on-tertiary-fixed-variant": "#454749",
+                        "error-container": "#93000a",
+                        "tertiary": "#c6c6c8",
+                        "surface-dim": "#131315",
+                        "primary": "#c8c6c5",
+                        "secondary": "#d4c5a9",
+                        "primary-container": "#121212",
+                        "outline-variant": "#444748",
+                        "surface-container": "#1f1f21",
+                        "error": "#ffb4ab",
+                        "tertiary-container": "#101214",
+                        "on-secondary": "#382f1c",
+                        "inverse-primary": "#5f5e5e",
+                        "on-secondary-container": "#c2b498",
+                        "surface": "#131315",
+                        "inverse-on-surface": "#303032",
+                        "on-surface": "#e4e2e4",
+                        "on-surface-variant": "#c4c7c7",
+                        "secondary-fixed-dim": "#d4c5a9",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed": "#f1e1c4",
+                        "primary-fixed": "#e5e2e1",
+                        "on-secondary-fixed-variant": "#504630",
+                        "on-secondary-fixed": "#221b09",
+                        "surface-variant": "#353437",
+                        "on-primary-container": "#7e7d7d",
+                        "tertiary-fixed": "#e2e2e2",
+                        "surface-container-high": "#2a2a2c",
+                        "surface-container-low": "#1b1b1d",
+                        "secondary-container": "#504630",
+                        "on-tertiary": "#2f3132",
+                        "tertiary-fixed-dim": "#c6c6c8",
+                        "outline": "#8e9192",
+                        "surface-tint": "#c8c6c5",
+                        "primary-fixed-dim": "#c8c6c5"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "8px",
+                        "margin-mobile": "20px",
+                        "margin-desktop": "64px",
+                        "container-max": "1440px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "display-lg-mobile": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                        "headline-sm": ["24px", {"lineHeight": "32px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                        "display-lg-mobile": ["40px", {"lineHeight": "48px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "display-lg": ["64px", {"lineHeight": "72px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "letterSpacing": "0em", "fontWeight": "400"}],
+                        "headline-md": ["32px", {"lineHeight": "40px", "letterSpacing": "0.02em", "fontWeight": "500"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #131315; color: #e4e2e4; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glass-card:hover { border-color: rgba(212, 197, 169, 0.3); transition: border-color 0.3s ease; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0e0e10; }
+        ::-webkit-scrollbar-thumb { background: #353437; border-radius: 10px; }
+        .gold-glow { text-shadow: 0 0 10px rgba(212, 197, 169, 0.4); }
+        .active-dot { box-shadow: 0 0 12px rgba(212, 197, 169, 0.6); }
+
+        /* Slider Specific Styles */
+        .comparison-container {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+        }
+        .comparison-after {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            clip-path: inset(0 0 0 50%);
+            z-index: 10;
+        }
+        .slider-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            z-index: 30;
+            cursor: ew-resize;
+        }
+        .slider-handle {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 2px;
+            background: #d4c5a9;
+            z-index: 20;
+            pointer-events: none;
+            box-shadow: 0 0 15px rgba(212, 197, 169, 0.5);
+        }
+        .slider-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #d4c5a9;
+            color: #131315;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid #131315;
+            z-index: 21;
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-white/10 bg-surface-container-lowest/80 backdrop-blur-xl flex flex-col py-unit-margin-desktop px-4 z-50">
+<div class="mb-12">
+<h1 class="font-display-lg text-display-lg-mobile tracking-widest text-secondary uppercase">AETHER</h1>
+<p class="text-on-surface-variant font-label-caps mt-1">Premium AI Studio</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-300" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-secondary bg-white/5 border-l-2 border-secondary font-medium" href="#">
+<span class="material-symbols-outlined">add_box</span>
+<span class="font-body-md text-body-md">New Design</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-300" href="#">
+<span class="material-symbols-outlined">folder_open</span>
+<span class="font-body-md text-body-md">My Projects</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-300" href="#">
+<span class="material-symbols-outlined">bookmark</span>
+<span class="font-body-md text-body-md">Saved Designs</span>
+</a>
+</nav>
+<div class="mt-auto space-y-6">
+<button class="w-full bg-secondary text-on-secondary py-3 rounded-lg font-bold uppercase tracking-widest text-[11px] hover:shadow-[0_0_20px_rgba(212,197,169,0.3)] transition-all">
+            Generate Concept
+        </button>
+<div class="space-y-2 border-t border-white/5 pt-6">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-on-surface text-label-sm font-label-sm" href="#">
+<span class="material-symbols-outlined">settings</span> Settings
+            </a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-on-surface text-label-sm font-label-sm" href="#">
+<span class="material-symbols-outlined">help_outline</span> Support
+            </a>
+</div>
+<div class="flex items-center gap-3 px-4">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden border border-white/10">
+<img alt="Architect Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFmiNEtVBQJwPETYdfBqRY_ce_8ZI5BXJksxBisZLvtU3J6m1HAHtncdI_8uXb2l4Km0g73Le-y77ySYvZun97mR-iA4NPkOsE4FlWlNvxAtaNJlJ3ykZnSnuH0qdSTYG31di7rXkizW2qtCJOoS_rZxus7hDqPIhKcD7IZSyE0woZOrPiX0Bsmf68qebqed8fXgEb7JR32DWduNhkEX8WnrT98_9UynfpUcZ213qjIg0-hMwoTQSz9uT7Gg28SCH228ZZPEDtIRM"/>
+</div>
+<div class="text-[12px]">
+<p class="font-semibold text-on-surface">Alex V. Studio</p>
+<p class="text-on-surface-variant">Pro Tier</p>
+</div>
+</div>
+</div>
+</aside>
+<main class="ml-64 min-h-screen bg-background text-on-background pb-20">
+<header class="h-20 bg-surface-dim/40 backdrop-blur-3xl border-b border-white/5 sticky top-0 z-40 flex items-center justify-center px-12">
+<div class="flex items-center gap-4 w-full max-w-4xl">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-secondary/20 text-secondary flex items-center justify-center border border-secondary/40">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</div>
+<span class="text-label-caps text-on-surface-variant hidden md:block">Room Upload</span>
+</div>
+<div class="flex-1 h-[1px] bg-white/10"></div>
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-secondary/20 text-secondary flex items-center justify-center border border-secondary/40">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</div>
+<span class="text-label-caps text-on-surface-variant hidden md:block">Style Analysis</span>
+</div>
+<div class="flex-1 h-[1px] bg-white/10"></div>
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-secondary/20 text-secondary flex items-center justify-center border border-secondary/40">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</div>
+<span class="text-label-caps text-on-surface-variant hidden md:block">Optimization</span>
+</div>
+<div class="flex-1 h-[1px] bg-white/10"></div>
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full border-2 border-secondary bg-secondary text-on-secondary flex items-center justify-center active-dot">
+<span class="text-[12px] font-bold">5</span>
+</div>
+<span class="text-label-caps text-secondary font-bold">Explore Results</span>
+</div>
+</div>
+</header>
+<div class="px-margin-desktop py-12 max-w-7xl mx-auto">
+<div class="mb-12">
+<h2 class="font-display-lg text-display-lg-mobile text-secondary-fixed-dim tracking-tight">Your AI Design Results</h2>
+<p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mt-2">
+                Explore AI-generated interior concepts based on your room, selected style, and design preferences.
+            </p>
+<div class="mt-8 flex flex-wrap gap-4">
+<div class="glass px-6 py-3 rounded-full flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-[20px]">chair</span>
+<span class="text-label-caps uppercase tracking-widest text-[11px]">Living Room</span>
+</div>
+<div class="glass px-6 py-3 rounded-full flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-[20px]">architecture</span>
+<span class="text-label-caps uppercase tracking-widest text-[11px]">Modern Style</span>
+</div>
+<div class="glass px-6 py-3 rounded-full flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-[20px]">payments</span>
+<span class="text-label-caps uppercase tracking-widest text-[11px]">Premium Budget</span>
+</div>
+<div class="glass px-6 py-3 rounded-full flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-[20px]">calendar_today</span>
+<span class="text-label-caps uppercase tracking-widest text-[11px]">Oct 26, 2024</span>
+</div>
+<div class="glass px-6 py-3 rounded-full flex items-center gap-3 border-secondary/20">
+<span class="material-symbols-outlined text-secondary text-[20px]">hub</span>
+<span class="text-label-caps uppercase tracking-widest text-[11px] text-secondary font-bold">98% AI Confidence</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-gutter">
+<section class="col-span-12 lg:col-span-8 space-y-12">
+<!-- Comparison Slider Section -->
+<div class="relative w-full aspect-video rounded-xl overflow-hidden glass group select-none">
+<div class="comparison-container">
+<!-- Before Image (Base) -->
+<div class="absolute inset-0">
+<img alt="Original empty room concept" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AP1WRLt6HHz71rm9ePHS2RpzX8BZaLliou2okiKPHvmO8s8O5vyGPfuGO-P7cud6z3gSmAQvuvPKH25QQatNohewnw4n4vb92l9bpuoN5k0rexxl4-Zez03QqAj3Wa_KSMNG6uwfasfymYyrCdo3L2VEMuIbqwxgZSAoO2ZnFarDWgA37rRs3357ED5mGxinyeYF4wg3ZwxQf5c0Kk-ahHIEMjgTvia6Mp8RZIGbeZFWnTgEysjbnYEqHWgj"/>
+<div class="absolute top-4 left-6 glass px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest bg-black/40 z-20">Before</div>
+</div>
+<!-- After Image (Overlay with clip-path) -->
+<div class="comparison-after" id="slider-after">
+<img alt="AI generated interior design" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AP1WRLtFiXQg4wzM1mn-b7PU2vyFR_4cXALXPXDJZ4X8h5ASXEN6uYd-oP7M745dXVdJ7YJdqF_VbJFId4UVLfAcoPskvEAH39MyHQjwCk1mBr3-ej2pmZPSUgjW_USgeAw_ME4q-aai8MxdT7aSDtTJAMWmZBLDEXHbjxtXREVvbQZnYC1KSYbQHy7o6EhZPuhrzH0I88tV_1V0RGLWpRvggnrS8kV1Op5ufjEIaHH9TJV0rsNCwqx-fjKUfQ"/>
+<div class="absolute top-4 right-6 glass px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest bg-secondary/80 text-on-secondary z-20">AI After</div>
+</div>
+<!-- Slider Controls -->
+<div class="slider-handle" id="slider-line">
+<div class="slider-button">
+<span class="material-symbols-outlined text-[20px]">unfold_more</span>
+</div>
+</div>
+<input class="slider-input" id="slider-range" max="100" min="0" type="range" value="50"/>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Concept A -->
+<div class="glass rounded-xl overflow-hidden glass-card group">
+<div class="relative h-48 overflow-hidden">
+<img alt="Concept A Visualization" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida/AP1WRLvYcd_WIK6wDigP53oxlt-zFYJpVcInMSXWxSFCvM4Z0kbu8t0VoK_CFjomtS6k7YPFOvZ-grx-RstVCZo6vblYAOZaXgbaGLZ3Ka4jmn1jgqEycjiJeflMcV8BSc2FR0-X7-vBBCA62I4PKAwXei_enuwR2IyetcDFwe41mZnmYnIyEukoZc3LIs38t1S_15li8o3UF0fHS8ubJ2FZYpZSSN47k4JCczKv-D4Mgx90UJgxka8sB3WsbA"/>
+<div class="absolute top-3 right-3 glass px-2 py-1 rounded-md text-[12px] font-bold text-secondary">9.4/10</div>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Concept A</h3>
+<p class="text-label-caps text-on-surface-variant">Modern Monochromatic</p>
+</div>
+<div class="text-right">
+<p class="text-label-caps text-secondary font-bold">96% Match</p>
+<p class="text-[12px] text-on-surface-variant">Est. $42k</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 glass py-2 rounded-lg text-label-caps hover:bg-white/10 transition-colors uppercase">View Details</button>
+<button class="px-3 glass py-2 rounded-lg text-secondary hover:bg-secondary/10 transition-colors">
+<span class="material-symbols-outlined text-[20px]">bookmark</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Concept B -->
+<div class="glass rounded-xl overflow-hidden glass-card group">
+<div class="relative h-48 overflow-hidden">
+<img alt="Concept B Visualization" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida/AP1WRLtFiXQg4wzM1mn-b7PU2vyFR_4cXALXPXDJZ4X8h5ASXEN6uYd-oP7M745dXVdJ7YJdqF_VbJFId4UVLfAcoPskvEAH39MyHQjwCk1mBr3-ej2pmZPSUgjW_USgeAw_ME4q-aai8MxdT7aSDtTJAMWmZBLDEXHbjxtXREVvbQZnYC1KSYbQHy7o6EhZPuhrzH0I88tV_1V0RGLWpRvggnrS8kV1Op5ufjEIaHH9TJV0rsNCwqx-fjKUfQ"/>
+<div class="absolute top-3 right-3 glass px-2 py-1 rounded-md text-[12px] font-bold text-secondary">8.9/10</div>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Concept B</h3>
+<p class="text-label-caps text-on-surface-variant">Organic Minimalist</p>
+</div>
+<div class="text-right">
+<p class="text-label-caps text-secondary font-bold">92% Match</p>
+<p class="text-[12px] text-on-surface-variant">Est. $38k</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 glass py-2 rounded-lg text-label-caps hover:bg-white/10 transition-colors uppercase">View Details</button>
+<button class="px-3 glass py-2 rounded-lg text-secondary hover:bg-secondary/10 transition-colors">
+<span class="material-symbols-outlined text-[20px]">bookmark</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Concept C -->
+<div class="glass rounded-xl overflow-hidden glass-card group">
+<div class="relative h-48 overflow-hidden">
+<img alt="Concept C Visualization" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida/AP1WRLvYcd_WIK6wDigP53oxlt-zFYJpVcInMSXWxSFCvM4Z0kbu8t0VoK_CFjomtS6k7YPFOvZ-grx-RstVCZo6vblYAOZaXgbaGLZ3Ka4jmn1jgqEycjiJeflMcV8BSc2FR0-X7-vBBCA62I4PKAwXei_enuwR2IyetcDFwe41mZnmYnIyEukoZc3LIs38t1S_15li8o3UF0fHS8ubJ2FZYpZSSN47k4JCczKv-D4Mgx90UJgxka8sB3WsbA"/>
+<div class="absolute top-3 right-3 glass px-2 py-1 rounded-md text-[12px] font-bold text-secondary">9.1/10</div>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Concept C</h3>
+<p class="text-label-caps text-on-surface-variant">Bold Luxury</p>
+</div>
+<div class="text-right">
+<p class="text-label-caps text-secondary font-bold">88% Match</p>
+<p class="text-[12px] text-on-surface-variant">Est. $65k</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 glass py-2 rounded-lg text-label-caps hover:bg-white/10 transition-colors uppercase">View Details</button>
+<button class="px-3 glass py-2 rounded-lg text-secondary hover:bg-secondary/10 transition-colors">
+<span class="material-symbols-outlined text-[20px]">bookmark</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Concept D -->
+<div class="glass rounded-xl overflow-hidden glass-card group">
+<div class="relative h-48 overflow-hidden">
+<img alt="Concept D Visualization" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida/AP1WRLtFiXQg4wzM1mn-b7PU2vyFR_4cXALXPXDJZ4X8h5ASXEN6uYd-oP7M745dXVdJ7YJdqF_VbJFId4UVLfAcoPskvEAH39MyHQjwCk1mBr3-ej2pmZPSUgjW_USgeAw_ME4q-aai8MxdT7aSDtTJAMWmZBLDEXHbjxtXREVvbQZnYC1KSYbQHy7o6EhZPuhrzH0I88tV_1V0RGLWpRvggnrS8kV1Op5ufjEIaHH9TJV0rsNCwqx-fjKUfQ"/>
+<div class="absolute top-3 right-3 glass px-2 py-1 rounded-md text-[12px] font-bold text-secondary">8.7/10</div>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Concept D</h3>
+<p class="text-label-caps text-on-surface-variant">Functional Hub</p>
+</div>
+<div class="text-right">
+<p class="text-label-caps text-secondary font-bold">85% Match</p>
+<p class="text-[12px] text-on-surface-variant">Est. $29k</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 glass py-2 rounded-lg text-label-caps hover:bg-white/10 transition-colors uppercase">View Details</button>
+<button class="px-3 glass py-2 rounded-lg text-secondary hover:bg-secondary/10 transition-colors">
+<span class="material-symbols-outlined text-[20px]">bookmark</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<aside class="col-span-12 lg:col-span-4 space-y-6">
+<div class="glass rounded-xl p-8 sticky top-24">
+<div class="flex items-center gap-3 mb-8">
+<div class="w-10 h-10 rounded-lg bg-secondary/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">auto_awesome</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">AI Insights</h3>
+<p class="text-label-caps text-on-surface-variant uppercase tracking-widest text-[10px]">Studio Analysis</p>
+</div>
+</div>
+<div class="space-y-8">
+<div>
+<h4 class="text-label-caps text-secondary mb-4 uppercase tracking-tighter">Recommended Materials</h4>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-label-sm">Polished Concrete</span>
+<span class="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-label-sm">Smoked Oak</span>
+<span class="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-label-sm">Bouclé Fabric</span>
+<span class="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-label-sm">Brushed Brass</span>
+<span class="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-label-sm">White Carrara Marble</span>
+</div>
+</div>
+<div>
+<h4 class="text-label-caps text-secondary mb-4 uppercase tracking-tighter">Suggested Furniture</h4>
+<div class="space-y-3">
+<div class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group">
+<div class="w-12 h-12 rounded bg-surface-container flex-shrink-0 overflow-hidden">
+<img alt="Curved bouclé sofa details" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AP1WRLtFiXQg4wzM1mn-b7PU2vyFR_4cXALXPXDJZ4X8h5ASXEN6uYd-oP7M745dXVdJ7YJdqF_VbJFId4UVLfAcoPskvEAH39MyHQjwCk1mBr3-ej2pmZPSUgjW_USgeAw_ME4q-aai8MxdT7aSDtTJAMWmZBLDEXHbjxtXREVvbQZnYC1KSYbQHy7o6EhZPuhrzH0I88tV_1V0RGLWpRvggnrS8kV1Op5ufjEIaHH9TJV0rsNCwqx-fjKUfQ"/>
+</div>
+<div>
+<p class="text-label-sm text-on-surface font-semibold">Organic Curved Sofa</p>
+<p class="text-[11px] text-on-surface-variant">Ligne Roset Inspired</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-on-surface-variant text-[18px] opacity-0 group-hover:opacity-100 transition-opacity">shopping_cart</span>
+</div>
+<div class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group">
+<div class="w-12 h-12 rounded bg-surface-container flex-shrink-0 overflow-hidden">
+<img alt="Marble table details" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AP1WRLvYcd_WIK6wDigP53oxlt-zFYJpVcInMSXWxSFCvM4Z0kbu8t0VoK_CFjomtS6k7YPFOvZ-grx-RstVCZo6vblYAOZaXgbaGLZ3Ka4jmn1jgqEycjiJeflMcV8BSc2FR0-X7-vBBCA62I4PKAwXei_enuwR2IyetcDFwe41mZnmYnIyEukoZc3LIs38t1S_15li8o3UF0fHS8ubJ2FZYpZSSN47k4JCczKv-D4Mgx90UJgxka8sB3WsbA"/>
+</div>
+<div>
+<p class="text-label-sm text-on-surface font-semibold">Sculptural Marble Table</p>
+<p class="text-[11px] text-on-surface-variant">Minotti Style</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-on-surface-variant text-[18px] opacity-0 group-hover:opacity-100 transition-opacity">shopping_cart</span>
+</div>
+</div>
+</div>
+<div class="p-4 rounded-xl bg-secondary/5 border border-secondary/10">
+<h4 class="text-label-caps text-secondary mb-2 flex items-center gap-2 uppercase tracking-tighter">
+<span class="material-symbols-outlined text-[16px]">tips_and_updates</span>
+                                Space Optimization
+                            </h4>
+<p class="text-label-sm text-on-surface-variant leading-relaxed">
+                                Based on the window orientation, AETHER suggests placing high-reflectance surfaces opposite the glass to maximize natural light penetration during morning hours.
+                            </p>
+</div>
+</div>
+<button class="w-full mt-8 py-4 border border-white/10 rounded-xl font-label-caps text-secondary hover:bg-white/5 transition-all flex items-center justify-center gap-2 uppercase">
+<span class="material-symbols-outlined">analytics</span>
+                        Detailed Style Report
+                    </button>
+</div>
+</aside>
+</div>
+</div>
+</main>
+<div class="fixed bottom-8 left-64 right-0 px-margin-desktop z-50 pointer-events-none">
+<div class="max-w-7xl mx-auto flex justify-between items-center glass p-4 rounded-2xl shadow-2xl pointer-events-auto border-secondary/20">
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-6 py-3 rounded-xl bg-secondary text-on-secondary font-bold text-label-sm hover:shadow-[0_0_20px_rgba(212,197,169,0.4)] transition-all">
+<span class="material-symbols-outlined">3d_rotation</span>
+                Open 3D Walkthrough
+            </button>
+<button class="flex items-center gap-2 px-6 py-3 rounded-xl glass hover:bg-white/10 transition-colors text-label-sm text-on-surface font-semibold">
+<span class="material-symbols-outlined">save</span>
+                Save Design
+            </button>
+</div>
+<div class="flex gap-2">
+<button class="w-12 h-12 flex items-center justify-center glass rounded-xl text-on-surface-variant hover:text-secondary transition-colors" title="Download HD">
+<span class="material-symbols-outlined">download</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center glass rounded-xl text-on-surface-variant hover:text-secondary transition-colors" title="Export PDF">
+<span class="material-symbols-outlined">picture_as_pdf</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center glass rounded-xl text-on-surface-variant hover:text-secondary transition-colors" title="Generate More">
+<span class="material-symbols-outlined">refresh</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+    // Comparison Slider Functionality
+    const sliderRange = document.getElementById('slider-range');
+    const sliderAfter = document.getElementById('slider-after');
+    const sliderLine = document.getElementById('slider-line');
+
+    sliderRange.addEventListener('input', (e) => {
+        const value = e.target.value;
+        // Update After Image Clip-Path
+        // inset(top right bottom left) -> we want to reveal from right to left as slider moves
+        // If slider is 100, we want 100% visible (inset 0 0 0 0)
+        // If slider is 0, we want 0% visible (inset 0 0 0 100%)
+        const percentage = value;
+        sliderAfter.style.clipPath = `inset(0 0 0 ${100 - percentage}%)`;
+        
+        // Update Handle Position
+        sliderLine.style.left = `${percentage}%`;
+    });
+
+    // Initialize state
+    window.addEventListener('DOMContentLoaded', () => {
+        sliderAfter.style.clipPath = `inset(0 0 0 50%)`;
+        sliderLine.style.left = `50%`;
+    });
+
+    // Micro-interaction for Concept Cards
+    document.querySelectorAll('.glass-card').forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.style.transform = 'translateY(-4px)';
+            card.style.transition = 'transform 0.3s ease';
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'translateY(0)';
+        });
+    });
+</script>
+
+<!-- AETHER_WIRED -->
+<script src="../shared/aether.js" defer></script>
+</body></html>

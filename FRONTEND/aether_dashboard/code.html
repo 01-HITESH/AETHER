@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AETHER - AI Architectural Design Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                            "tertiary": "#c6c6c8",
+                            "on-primary-fixed": "#1c1b1b",
+                            "primary-fixed-dim": "#c8c6c5",
+                            "on-secondary": "#382f1c",
+                            "on-background": "#e4e2e4",
+                            "on-primary-fixed-variant": "#474646",
+                            "background": "#131315",
+                            "primary": "#c8c6c5",
+                            "on-tertiary-container": "#7c7d7f",
+                            "on-surface-variant": "#c4c7c7",
+                            "tertiary-fixed-dim": "#c6c6c8",
+                            "inverse-surface": "#e4e2e4",
+                            "tertiary-fixed": "#e2e2e4",
+                            "outline-variant": "#444748",
+                            "surface-container": "#1f1f21",
+                            "surface-variant": "#353437",
+                            "surface-container-lowest": "#0e0e10",
+                            "surface-container-low": "#1b1b1d",
+                            "on-error-container": "#ffdad6",
+                            "on-primary": "#313030",
+                            "on-secondary-fixed-variant": "#504630",
+                            "on-secondary-fixed": "#221b09",
+                            "outline": "#8e9192",
+                            "inverse-on-surface": "#303032",
+                            "surface-tint": "#c8c6c5",
+                            "error": "#ffb4ab",
+                            "on-tertiary-fixed": "#1a1c1d",
+                            "primary-container": "#121212",
+                            "secondary-fixed": "#f1e1c4",
+                            "on-secondary-container": "#c2b498",
+                            "surface": "#131315",
+                            "on-primary-container": "#7e7d7d",
+                            "surface-container-high": "#2a2a2c",
+                            "secondary-container": "#504630",
+                            "inverse-primary": "#5f5e5e",
+                            "surface-dim": "#131315",
+                            "surface-container-highest": "#353437",
+                            "primary-fixed": "#e5e2e1",
+                            "on-error": "#690005",
+                            "tertiary-container": "#101214",
+                            "secondary": "#d4c5a9",
+                            "on-tertiary": "#2f3132",
+                            "on-surface": "#e4e2e4",
+                            "on-tertiary-fixed-variant": "#454749",
+                            "surface-bright": "#39393b",
+                            "secondary-fixed-dim": "#d4c5a9",
+                            "error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "full": "9999px"
+                    },
+                    "spacing": {
+                            "container-max": "1440px",
+                            "unit": "8px",
+                            "margin-desktop": "64px",
+                            "gutter": "24px",
+                            "margin-mobile": "20px"
+                    },
+                    "fontFamily": {
+                            "label-caps": ["Inter"],
+                            "headline-sm": ["Inter"],
+                            "display-lg": ["Inter"],
+                            "label-sm": ["Inter"],
+                            "body-lg": ["Inter"],
+                            "body-md": ["Inter"],
+                            "display-lg-mobile": ["Inter"],
+                            "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                            "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                            "headline-sm": ["24px", {"lineHeight": "32px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                            "display-lg": ["64px", {"lineHeight": "72px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                            "label-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                            "body-lg": ["18px", {"lineHeight": "28px", "letterSpacing": "0em", "fontWeight": "400"}],
+                            "body-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400"}],
+                            "display-lg-mobile": ["40px", {"lineHeight": "48px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                            "headline-md": ["32px", {"lineHeight": "40px", "letterSpacing": "0.02em", "fontWeight": "500"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #121212; color: #e4e2e4; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        .glass-panel-hover:hover {
+            border-color: rgba(212, 197, 169, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(212, 197, 169, 0.1);
+        }
+        .text-glow {
+            text-shadow: 0 0 10px rgba(212, 197, 169, 0.3);
+        }
+        .anim-fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        .anim-delay-1 { animation-delay: 0.1s; }
+        .anim-delay-2 { animation-delay: 0.2s; }
+        .anim-delay-3 { animation-delay: 0.3s; }
+        
+        @keyframes fadeIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex selection:bg-secondary/30 selection:text-secondary">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 bg-background/80 backdrop-blur-xl border-r border-white/10 shadow-2xl shadow-primary/5 transition-all duration-300 ease-in-out p-margin-desktop z-50">
+<div class="mb-12">
+<h1 class="font-display-lg text-primary tracking-widest text-3xl">AETHER</h1>
+<p class="font-label-caps text-on-surface-variant mt-1">Architectural AI</p>
+</div>
+<ul class="flex flex-col gap-2 flex-grow">
+<li>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-secondary font-bold bg-secondary/10 transition-colors" href="../aether_dashboard/code.html">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-sm text-label-sm">Dashboard</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors" href="../aether_upload_room/code.html">
+<span class="material-symbols-outlined">add_box</span>
+<span class="font-label-sm text-label-sm">New Design</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors" href="../aether_project_details/code.html">
+<span class="material-symbols-outlined">folder_open</span>
+<span class="font-label-sm text-label-sm">My Projects</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors" href="../aether_saved_designs/code.html">
+<span class="material-symbols-outlined">bookmark</span>
+<span class="font-label-sm text-label-sm">Saved Designs</span>
+</a>
+</li>
+<li class="mt-auto">
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors" href="../aether_profile_settings/code.html">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors" href="../aether_profile_settings/code.html#settings">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-sm text-label-sm">Settings</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors" href="../aether_authentication/code.html">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-sm text-label-sm">Logout</span>
+</a>
+</li>
+</ul>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 md:ml-64 flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 left-0 md:left-64 h-20 bg-background/40 backdrop-blur-md border-b border-white/5 flex justify-between items-center px-gutter w-full md:w-[calc(100%-16rem)] z-40 transition-opacity duration-200">
+<div class="flex items-center gap-4">
+<div class="md:hidden">
+<h1 class="font-display-lg-mobile text-primary text-2xl">AETHER</h1>
+</div>
+<h2 class="hidden md:block font-headline-sm text-headline-sm text-primary">Welcome Back,</h2>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden border border-white/10">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="A high-resolution, professional headshot of a modern architectural designer in a sophisticated dark-themed studio setting, dramatic studio lighting, soft shadows, sharp focus on the face." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2kzdkUz-vL9xB4Y6yuOFIQSjw8MzlitPn2ph0xccWkK5eTCc9XOWNg5R4PdOJbEXNvdYgkPqRaIbs_5F5OJqSMWusEkHBtGOfQbDcSMjKRvxpyQr3WxSPrUHdNNJLyaYnIgu5XA2feJnWmcHqyeETt35hP_w_SwFF881XYp1yOKUff0ONKJh43pPvk5eQ6GOdP6m0kKBThmd8nIP3fq0W_GtxSMQwxmi37Kmde2M3-eSrVoFF5ZTN2hUCfQ2W4eVvIa-oceEbkZI"/>
+</div>
+</div>
+</header>
+<!-- Main Workspace -->
+<main class="flex-1 mt-20 p-margin-mobile md:p-margin-desktop max-w-container-max mx-auto w-full overflow-y-auto">
+<!-- Hero Dashboard Card -->
+<section class="glass-panel rounded-2xl p-8 md:p-12 mb-12 relative overflow-hidden anim-fade-in group">
+<div class="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent opacity-50"></div>
+<div class="relative z-10 max-w-2xl">
+<h2 class="font-headline-md text-headline-md text-primary mb-4">Start a New Interior Transformation</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-8">Upload a room image and let AI create stunning interior designs, 3D models, and immersive 360° walkthroughs with architectural precision.</p>
+<a class="bg-secondary text-on-secondary px-8 py-4 rounded-lg font-label-sm text-label-sm font-semibold tracking-wide hover:shadow-[0_0_20px_rgba(212,197,169,0.3)] transition-all duration-300 flex items-center gap-3" href="../aether_upload_room/code.html">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+                        Create New Design
+                        </a>
+</div>
+<!-- Decorative Abstract Background Element -->
+<div class="absolute -right-20 -bottom-20 w-96 h-96 bg-secondary/5 rounded-full blur-[100px] pointer-events-none transition-transform duration-1000 group-hover:scale-110"></div>
+</section>
+<!-- Statistics Grid -->
+<section class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+<div class="glass-panel rounded-xl p-6 anim-fade-in anim-delay-1 flex flex-col justify-between h-32 hover:-translate-y-1 transition-transform duration-300">
+<p class="font-label-sm text-on-surface-variant">Designs Generated</p>
+<p class="font-headline-md text-headline-md text-secondary">24</p>
+</div>
+<div class="glass-panel rounded-xl p-6 anim-fade-in anim-delay-1 flex flex-col justify-between h-32 hover:-translate-y-1 transition-transform duration-300">
+<p class="font-label-sm text-on-surface-variant">Available Styles</p>
+<p class="font-headline-md text-headline-md text-secondary">18</p>
+</div>
+<div class="glass-panel rounded-xl p-6 anim-fade-in anim-delay-2 flex flex-col justify-between h-32 hover:-translate-y-1 transition-transform duration-300">
+<p class="font-label-sm text-on-surface-variant">3D Models Created</p>
+<p class="font-headline-md text-headline-md text-secondary">12</p>
+</div>
+<div class="glass-panel rounded-xl p-6 anim-fade-in anim-delay-2 flex flex-col justify-between h-32 hover:-translate-y-1 transition-transform duration-300">
+<p class="font-label-sm text-on-surface-variant">360° Walkthroughs</p>
+<p class="font-headline-md text-headline-md text-secondary">5</p>
+</div>
+</section>
+<!-- Recent Projects & Quick Actions Split -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+<!-- Recent Projects -->
+<section class="lg:col-span-2 anim-fade-in anim-delay-3">
+<div class="flex justify-between items-end mb-6">
+<h3 class="font-headline-sm text-headline-sm text-primary">Recent Projects</h3>
+<a class="font-label-sm text-secondary hover:underline underline-offset-4" href="../aether_saved_designs/code.html">View All</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Project Card 1 -->
+<div class="glass-panel glass-panel-hover rounded-xl overflow-hidden group cursor-pointer transition-all duration-500">
+<div class="relative h-48 w-full overflow-hidden">
+<img alt="Minimalist Living Room" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A highly realistic 3D render of a luxurious, minimalist living room with a neutral color palette. The room features a curved cream sofa, floor-to-ceiling windows showing a city skyline at dusk, and soft ambient lighting from sculptural brass lamps. The aesthetic is high-end architectural visualization." src="https://lh3.googleusercontent.com/aida/AP1WRLtdhyBwfMgBRHfRLn6OXhKmjEx4ovDMMgIuEYwXI8E2f54RLmDNRK6AQ-JrJKx-jSz6HSy4TbORQ0kRDuWx-YGPX3tgo_F7hHFYtGT5Z5FHQG9ssUl__9KqcbQ7WD7k2oDxoDM-lT-AT15rbd0O1LiDQ0pvTQz2Y_BOnJM2u4oeo24VTRoPydA_yit4eIaHvzlCldlY3lwLRexZjIaJc91lXfNI6_sPDBgAI5Qrg4UdRHOsVX1sXZyxKQ"/>
+<div class="absolute top-4 right-4 bg-background/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+<span class="font-label-caps text-on-surface text-[10px]">COMPLETED</span>
+</div>
+</div>
+<div class="p-5">
+<h4 class="font-label-sm text-label-sm text-primary mb-1">Minimalist Living Room</h4>
+<p class="font-body-md text-[13px] text-on-surface-variant">Oct 24, 2023</p>
+</div>
+</div>
+<!-- Project Card 2 -->
+<div class="glass-panel glass-panel-hover rounded-xl overflow-hidden group cursor-pointer transition-all duration-500">
+<div class="relative h-48 w-full overflow-hidden">
+<img alt="Brutalist Study" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A stunning hyper-realistic architectural visualization of a modern, brutalist-inspired home office. The space features raw concrete walls, warm wood paneling, a sleek dark metal desk, and dramatic directional lighting casting stark shadows. A large window reveals a lush, dark forest setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTURtkoIrRXnilehSDmGE5CfQEE0mahHFAi9IeBrM00wyb2KFIYOEedkKw2Xhhg2Zo9fjrzt871w5RKI5i4xDVzvyLgpz8LNe-0Gu_dd7ZN4xNMmc4BfWVUklPr28EBJkpu-Trft31YGFeIzwTp33aneCh5bK3SbY3rM54irlS13ufhX6kvtVQOoZ_T_8wLYsjuXYoJerfqaWzdmoStJrBzJzloTsCFOg8LInZKwP-UVmQrzZmrXi9me44UDEw-OSTeo1oYsHLX0o"/>
+<div class="absolute top-4 right-4 bg-background/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-secondary animate-pulse"></div>
+<span class="font-label-caps text-on-surface text-[10px]">PROCESSING</span>
+</div>
+</div>
+<div class="p-5">
+<h4 class="font-label-sm text-label-sm text-primary mb-1">Brutalist Study Area</h4>
+<p class="font-body-md text-[13px] text-on-surface-variant">Oct 26, 2023</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Quick Actions -->
+<section class="lg:col-span-1 anim-fade-in anim-delay-3">
+<h3 class="font-headline-sm text-headline-sm text-primary mb-6">Quick Actions</h3>
+<div class="flex flex-col gap-4">
+<a class="glass-panel glass-panel-hover rounded-xl p-4 flex items-center gap-4 text-left transition-all duration-300 w-full" href="../aether_upload_room/code.html">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center border border-white/5">
+<span class="material-symbols-outlined text-secondary">cloud_upload</span>
+</div>
+<div>
+<h4 class="font-label-sm text-label-sm text-primary">Upload Room</h4>
+<p class="text-[12px] text-on-surface-variant mt-1">Start from a photo</p>
+</div>
+</a>
+<a class="glass-panel glass-panel-hover rounded-xl p-4 flex items-center gap-4 text-left transition-all duration-300 w-full" href="../aether_style_selection/code.html">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center border border-white/5">
+<span class="material-symbols-outlined text-secondary">palette</span>
+</div>
+<div>
+<h4 class="font-label-sm text-label-sm text-primary">Browse Styles</h4>
+<p class="text-[12px] text-on-surface-variant mt-1">Explore AI models</p>
+</div>
+</a>
+<a class="glass-panel glass-panel-hover rounded-xl p-4 flex items-center gap-4 text-left transition-all duration-300 w-full" href="../aether_saved_designs/code.html">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center border border-white/5">
+<span class="material-symbols-outlined text-secondary">view_in_ar</span>
+</div>
+<div>
+<h4 class="font-label-sm text-label-sm text-primary">View Saved Designs</h4>
+<p class="text-[12px] text-on-surface-variant mt-1">Access library</p>
+</div>
+</a>
+<a class="glass-panel glass-panel-hover rounded-xl p-4 flex items-center gap-4 text-left transition-all duration-300 w-full" href="../aether_project_details/code.html">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center border border-white/5">
+<span class="material-symbols-outlined text-secondary">history</span>
+</div>
+<div>
+<h4 class="font-label-sm text-label-sm text-primary">Continue Last Project</h4>
+<p class="text-[12px] text-on-surface-variant mt-1">Resume work</p>
+</div>
+</a>
+</div>
+</section>
+</div>
+</main>
+</div>
+<script>
+        const SESSION_KEY = 'aetherSession';
+        // Unified with aether.js: a backend token counts as a valid session.
+        if (!sessionStorage.getItem(SESSION_KEY) && !localStorage.getItem('aether_token')) {
+            window.location.replace('../aether_authentication/code.html');
+        }
+</script>
+
+<!-- AETHER_WIRED -->
+<script src="../shared/aether.js" defer></script>
+</body></html>

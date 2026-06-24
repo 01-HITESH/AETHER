@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface">
+<div class="fixed inset-0 w-full h-full bg-background" id="threejs-container-refined">
+<!-- STITCH_THREEJS_START:ANIMATION_22 class="w-full h-full block bg-transparent" -->
+<div class="w-full h-full block bg-transparent" style="display:block;">
+<script src="https://ajax.googleapis.com/ajax/libs/threejs/r125/three.min.js"></script>
+<div id="threejs-container-ANIMATION_22" style="width:100%;height:100%"></div>
+<!-- AETHER: demo room replaced by shared/pano-viewer.js -->
+</div>
+<!-- STITCH_THREEJS_END:ANIMATION_22 -->
+</div>
+
+<!-- AETHER_WIRED -->
+<script src="../shared/aether.js" defer></script>
+<script src="../shared/pano-viewer.js" defer></script>
+</body></html>

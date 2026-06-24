@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AETHER - 3D Architectural Walkthrough</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#221b09",
+                        "tertiary-fixed-dim": "#c6c6c8",
+                        "on-surface": "#e4e2e4",
+                        "inverse-surface": "#e4e2e4",
+                        "on-tertiary-fixed-variant": "#454749",
+                        "on-primary-fixed-variant": "#474646",
+                        "surface-variant": "#353437",
+                        "on-surface-variant": "#c4c7c7",
+                        "on-primary-fixed": "#1c1b1b",
+                        "surface-bright": "#39393b",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "error-container": "#93000a",
+                        "error": "#ffb4ab",
+                        "outline-variant": "#444748",
+                        "surface-container-lowest": "#0e0e10",
+                        "on-error": "#690005",
+                        "inverse-on-surface": "#303032",
+                        "surface": "#131315",
+                        "on-tertiary-fixed": "#1a1c1d",
+                        "on-secondary-fixed-variant": "#504630",
+                        "tertiary": "#c6c6c8",
+                        "on-primary-container": "#7e7d7d",
+                        "background": "#131315",
+                        "secondary": "#d4c5a9",
+                        "outline": "#8e9192",
+                        "on-background": "#e4e2e4",
+                        "tertiary-fixed": "#e2e2e4",
+                        "surface-tint": "#c8c6c5",
+                        "surface-container-low": "#1b1b1d",
+                        "secondary-fixed-dim": "#d4c5a9",
+                        "inverse-primary": "#5f5e5e",
+                        "surface-container": "#1f1f21",
+                        "on-primary": "#313030",
+                        "secondary-fixed": "#f1e1c4",
+                        "on-tertiary-container": "#7c7d7f",
+                        "on-secondary-container": "#c2b498",
+                        "tertiary-container": "#101214",
+                        "surface-container-highest": "#353437",
+                        "secondary-container": "#504630",
+                        "primary-fixed": "#e5e2e1",
+                        "on-tertiary": "#2f3132",
+                        "surface-container-high": "#2a2a2c",
+                        "on-secondary": "#382f1c",
+                        "on-error-container": "#ffdad6",
+                        "surface-dim": "#131315",
+                        "primary-container": "#121212",
+                        "primary": "#c8c6c5"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "margin-desktop": "64px",
+                        "container-max": "1440px",
+                        "margin-mobile": "20px",
+                        "unit": "8px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "display-lg-mobile": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["64px", { "lineHeight": "72px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["32px", { "lineHeight": "40px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600" }],
+                        "headline-sm": ["24px", { "lineHeight": "32px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "letterSpacing": "0em", "fontWeight": "400" }],
+                        "label-sm": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "display-lg-mobile": ["40px", { "lineHeight": "48px", "letterSpacing": "0.02em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #121212; color: #e4e2e4; margin: 0; overflow: hidden; }
+        .glass-panel {
+            background: rgba(18, 18, 20, 0.4);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .glow-hover:hover {
+            box-shadow: 0 0 15px rgba(212, 197, 169, 0.3);
+            border-color: rgba(212, 197, 169, 0.5);
+        }
+        /* Gizmo styling */
+        .gizmo-container {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            width: 80px;
+            height: 80px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .axis { position: absolute; transform-origin: 0 50%; height: 2px; top: 50%; left: 50%; }
+        .axis-x { width: 30px; background-color: #ffb4ab; transform: rotate(0deg); }
+        .axis-y { width: 30px; background-color: #d4c5a9; transform: rotate(-90deg); }
+        .axis-z { width: 30px; background-color: #c8c6c5; transform: rotate(135deg); }
+        .gizmo-center { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; background-color: #ffffff; border-radius: 50%; transform: translate(-50%, -50%); }
+    </style>
+</head>
+<body class="bg-background text-on-background flex h-screen w-screen overflow-hidden">
+<!-- SideNavBar (from JSON) -->
+<nav class="hidden md:flex h-screen w-64 fixed left-0 top-0 flex-col py-unit bg-surface-container-lowest/80 backdrop-blur-xl border-r border-white/10 shadow-2xl z-50">
+<div class="px-gutter mb-12 mt-8">
+<h1 class="font-display-lg text-secondary tracking-widest text-2xl font-bold uppercase">AETHER</h1>
+<p class="font-label-caps text-on-surface-variant mt-2 text-[10px]">Premium AI Interior Design</p>
+</div>
+<div class="flex-1 flex flex-col gap-2 px-4">
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-white/5 transition-colors duration-300" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="font-label-sm text-label-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-white/5 transition-colors duration-300" href="#">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+<span class="font-label-sm text-label-sm">New Design</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-secondary font-bold border-r-2 border-secondary bg-secondary/5 transition-all duration-300 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[20px]">folder_special</span>
+<span class="font-label-sm text-label-sm">My Projects</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-white/5 transition-colors duration-300" href="#">
+<span class="material-symbols-outlined text-[20px]">bookmark</span>
+<span class="font-label-sm text-label-sm">Saved Designs</span>
+</a>
+</div>
+<div class="px-4 mt-auto mb-8">
+<button class="w-full py-3 bg-secondary text-on-secondary-fixed rounded-lg font-label-sm text-label-sm font-semibold hover:bg-secondary-fixed transition-colors">
+                Generate Space
+            </button>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="ml-0 md:ml-64 flex-1 relative h-full w-full bg-[#0a0a0a]">
+<!-- 3D Viewport (Mocked with DataStore reference) -->
+<div class="absolute inset-0 w-full h-full z-0">
+
+</div>
+<!-- Camera Gizmo -->
+<div class="gizmo-container">
+<div class="axis axis-x"></div>
+<div class="axis axis-y"></div>
+<div class="axis axis-z"></div>
+<div class="gizmo-center"></div>
+<span class="absolute top-0 right-10 text-[10px] text-[#d4c5a9] font-mono">Y</span>
+<span class="absolute top-10 right-0 text-[10px] text-[#ffb4ab] font-mono">X</span>
+<span class="absolute bottom-0 left-0 text-[10px] text-[#c8c6c5] font-mono">Z</span>
+</div>
+<!-- Top Right Action Bar -->
+<div class="absolute top-6 right-6 z-20 flex gap-3">
+<button class="glass-panel px-4 py-2 rounded-full flex items-center gap-2 text-on-surface hover:text-secondary transition-colors glow-hover">
+<span class="material-symbols-outlined text-[18px]">share</span>
+<span class="font-label-sm text-label-sm">Share</span>
+</button>
+<button class="bg-secondary text-on-secondary-fixed px-6 py-2 rounded-full flex items-center gap-2 font-label-sm text-label-sm font-semibold shadow-[0_0_20px_rgba(212,197,169,0.2)] hover:shadow-[0_0_30px_rgba(212,197,169,0.4)] transition-all">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                Export Model
+            </button>
+</div>
+<!-- Left Overlay Panel: Project Info & Materials -->
+<div class="absolute top-6 left-6 z-20 w-80 flex flex-col gap-4">
+<!-- Project Identity -->
+<div class="glass-panel p-6 rounded-xl">
+<div class="flex items-center gap-2 mb-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-label-caps text-label-caps text-secondary uppercase tracking-widest">Active Project</span>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-1">The Obsidian Lounge</h2>
+<p class="font-body-md text-label-sm text-on-surface-variant leading-relaxed">A study in brutalist warmth, combining raw concrete textures with refined organic forms.</p>
+</div>
+<!-- Material Palette -->
+<div class="glass-panel p-6 rounded-xl">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest mb-4">Material Palette</h3>
+<ul class="flex flex-col gap-3">
+<li class="flex items-center justify-between group cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-[#4a4a4a] border border-white/10 shadow-inner"></div>
+<span class="font-label-sm text-label-sm text-on-surface group-hover:text-secondary transition-colors">Polished Concrete</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">edit</span>
+</li>
+<li class="flex items-center justify-between group cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-[#3a2f26] border border-white/10 shadow-inner"></div>
+<span class="font-label-sm text-label-sm text-on-surface group-hover:text-secondary transition-colors">Smoked Oak</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">edit</span>
+</li>
+<li class="flex items-center justify-between group cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-[#e8e4db] border border-white/10 shadow-inner"></div>
+<span class="font-label-sm text-label-sm text-on-surface group-hover:text-secondary transition-colors">Cream Bouclé</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">edit</span>
+</li>
+</ul>
+</div>
+</div>
+<!-- Right Overlay Panel: Scene Navigator -->
+<div class="absolute top-24 right-6 z-20 w-64 flex flex-col gap-4">
+<div class="glass-panel p-5 rounded-xl">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest mb-4">Scene Explorer</h3>
+<div class="flex flex-col gap-2">
+<button class="flex items-center justify-between w-full px-3 py-2 rounded bg-white/5 border border-white/10 text-secondary font-label-sm text-label-sm">
+<span>Living Area</span>
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+<button class="flex items-center justify-between w-full px-3 py-2 rounded hover:bg-white/5 text-on-surface-variant font-label-sm text-label-sm transition-colors">
+<span>Dining Nook</span>
+<span class="material-symbols-outlined text-[16px]">visibility_off</span>
+</button>
+<button class="flex items-center justify-between w-full px-3 py-2 rounded hover:bg-white/5 text-on-surface-variant font-label-sm text-label-sm transition-colors">
+<span>Entryway</span>
+<span class="material-symbols-outlined text-[16px]">visibility_off</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Bottom Toolbar: Controls & Presets -->
+<div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 w-full max-w-4xl px-6">
+<div class="glass-panel rounded-2xl p-4 flex items-center justify-between">
+<!-- Navigation Tools -->
+<div class="flex items-center gap-2 border-r border-white/10 pr-6">
+<button class="p-2 rounded-lg hover:bg-white/10 text-on-surface-variant hover:text-secondary transition-colors flex flex-col items-center gap-1 group" title="Rotate">
+<span class="material-symbols-outlined text-[20px]">360</span>
+</button>
+<button class="p-2 rounded-lg hover:bg-white/10 text-on-surface-variant hover:text-secondary transition-colors flex flex-col items-center gap-1 group" title="Pan">
+<span class="material-symbols-outlined text-[20px]">pan_tool</span>
+</button>
+<button class="p-2 rounded-lg bg-white/5 border border-white/10 text-secondary transition-colors flex flex-col items-center gap-1 group" title="Zoom">
+<span class="material-symbols-outlined text-[20px]">zoom_in</span>
+</button>
+<button class="p-2 rounded-lg hover:bg-white/10 text-on-surface-variant hover:text-secondary transition-colors flex flex-col items-center gap-1 group" title="Reset View">
+<span class="material-symbols-outlined text-[20px]">restart_alt</span>
+</button>
+</div>
+<!-- View Presets (Thumbnails) -->
+<div class="flex items-center gap-4 px-6 flex-1 overflow-x-auto no-scrollbar">
+<button class="relative w-20 h-12 rounded-lg overflow-hidden border border-secondary shrink-0 focus:outline-none">
+<div class="w-full h-full bg-cover bg-center" data-alt="A small thumbnail preview image of a luxury living room entrance view in a modern 3D architectural rendering, warm lighting." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCJ4358x0fbkiw6miUiH3618RRhWbpDaVcfxC8ll2VuWpWwsTwVhSmx9RlAP9PKju5KunS1zoUHl4Tck0er4bGeGCR9fL70p-Bvwsuz5aN8QMUBzMFGSRTmzUu4ZCFcYLXNczn-wHRoxuMTIARSAd1HS_HGEuJAoUSqNQKB6Y8DvR_p9ALw_tbyEjgO08mbN21oTtitcbcS2jzYw-Um-7s-XNO_eA1SHWr--LBKbFnOxyK4B6iY6klzxBz--Bn6sbtu9ti_7M2-NtY')"></div>
+<div class="absolute inset-0 bg-black/40 flex items-end p-1">
+<span class="text-[9px] text-white font-medium truncate">Entrance</span>
+</div>
+</button>
+<button class="relative w-20 h-12 rounded-lg overflow-hidden border border-white/10 opacity-60 hover:opacity-100 hover:border-white/30 transition-all shrink-0 focus:outline-none">
+<div class="w-full h-full bg-cover bg-center" data-alt="A small thumbnail preview image of a luxury living room corner view focusing on an organic sofa, architectural rendering." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCl7wLjeNI46g-u5f9aMqTSwpVS7DdUY8u45eMJfFInXUokjt4PN4X---JJHbyAIYToXEmBJRV6T-BWVmVLjlVn8tYTbiz52VFRZEa1eqKUnUwVO-_E1W9FGVdNXEUSpKpH5K80O4TOoEpyq77ha3MzciJoRLbRE4IMr_bFruN1feqbkg--zsUElHMqTbDgUpU7AF8n100po9TJjba3eY0Gx7uayIbzgXm_rA4WqJGLBUpzOAuRWOFZCqsr9dZgCt3L6S8heT456ss')"></div>
+<div class="absolute inset-0 bg-black/40 flex items-end p-1">
+<span class="text-[9px] text-white font-medium truncate">Corner</span>
+</div>
+</button>
+<button class="relative w-20 h-12 rounded-lg overflow-hidden border border-white/10 opacity-60 hover:opacity-100 hover:border-white/30 transition-all shrink-0 focus:outline-none">
+<div class="w-full h-full bg-cover bg-center" data-alt="A small thumbnail preview image showing natural sunlight pouring through large windows in a modern living room 3D render." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDbw0mFKwcmhaCVSirxYYPwP5pqWIOgFZFFuviuNTq159nG8qPAX2g9PYMsPehHL9l9D3UfFUDI2fzhrv9_yGsSZJnSM9wdROR8VgtKc5fgxsMx2d0xry2VwYX5KNGi2zaK7MZKV1e8e-lAj4IL_egZs3WLmj7a-Tc7cukj7RuSZVy72DXUJonxdqnZasThoQeqsMBJVFuP7-kywsbpr5deV8pryNkVe6Mt99OLkYaVajLwDy2nveWBj6-g7ipZzXbzMYEkeHSpWaI')"></div>
+<div class="absolute inset-0 bg-black/40 flex items-end p-1">
+<span class="text-[9px] text-white font-medium truncate">Lighting</span>
+</div>
+</button>
+</div>
+<!-- Precision Tools -->
+<div class="flex items-center gap-2 pl-6 border-l border-white/10">
+<button class="p-2 rounded-lg hover:bg-white/10 text-on-surface-variant hover:text-secondary transition-colors" title="Measure">
+<span class="material-symbols-outlined text-[20px]">straighten</span>
+</button>
+<button class="p-2 rounded-lg hover:bg-white/10 text-on-surface-variant hover:text-secondary transition-colors" title="Snapshot">
+<span class="material-symbols-outlined text-[20px]">photo_camera</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+
+<!-- AETHER_WIRED -->
+<script src="../shared/aether.js" defer></script>
+<script src="../shared/pano-viewer.js" defer></script>
+</body></html>

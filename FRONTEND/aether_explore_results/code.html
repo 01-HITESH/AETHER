@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AETHER | Explore Results</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#353437",
+                        "inverse-surface": "#e4e2e4",
+                        "background": "#131315",
+                        "surface-bright": "#39393b",
+                        "on-tertiary-container": "#7c7d7f",
+                        "on-background": "#e4e2e4",
+                        "on-primary": "#313030",
+                        "on-primary-fixed-variant": "#474646",
+                        "on-tertiary-fixed": "#1a1c1d",
+                        "on-primary-fixed": "#1c1b1b",
+                        "on-error": "#690005",
+                        "surface-container-lowest": "#0e0e10",
+                        "on-tertiary-fixed-variant": "#454749",
+                        "error-container": "#93000a",
+                        "tertiary": "#c6c6c8",
+                        "surface-dim": "#131315",
+                        "primary": "#c8c6c5",
+                        "secondary": "#d4c5a9",
+                        "primary-container": "#121212",
+                        "outline-variant": "#444748",
+                        "surface-container": "#1f1f21",
+                        "error": "#ffb4ab",
+                        "tertiary-container": "#101214",
+                        "on-secondary": "#382f1c",
+                        "inverse-primary": "#5f5e5e",
+                        "on-secondary-container": "#c2b498",
+                        "surface": "#131315",
+                        "inverse-on-surface": "#303032",
+                        "on-surface": "#e4e2e4",
+                        "on-surface-variant": "#c4c7c7",
+                        "secondary-fixed-dim": "#d4c5a9",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed": "#f1e1c4",
+                        "primary-fixed": "#e5e2e1",
+                        "on-secondary-fixed-variant": "#504630",
+                        "on-secondary-fixed": "#221b09",
+                        "surface-variant": "#353437",
+                        "on-primary-container": "#7e7d7d",
+                        "tertiary-fixed": "#e2e2e2",
+                        "surface-container-high": "#2a2a2c",
+                        "surface-container-low": "#1b1b1d",
+                        "secondary-container": "#504630",
+                        "on-tertiary": "#2f3132",
+                        "tertiary-fixed-dim": "#c6c6c8",
+                        "outline": "#8e9192",
+                        "surface-tint": "#c8c6c5",
+                        "primary-fixed-dim": "#c8c6c5"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "8px",
+                        "margin-mobile": "20px",
+                        "margin-desktop": "64px",
+                        "container-max": "1440px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "display-lg-mobile": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                        "headline-sm": ["24px", {"lineHeight": "32px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                        "display-lg-mobile": ["40px", {"lineHeight": "48px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "display-lg": ["64px", {"lineHeight": "72px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "letterSpacing": "0em", "fontWeight": "400"}],
+                        "headline-md": ["32px", {"lineHeight": "40px", "letterSpacing": "0.02em", "fontWeight": "500"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #131315; color: #e4e2e4; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glass-card:hover { border-color: rgba(212, 197, 169, 0.3); transition: border-color 0.3s ease; }
+        .slider-handle { cursor: ew-resize; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0e0e10; }
+        ::-webkit-scrollbar-thumb { background: #353437; border-radius: 10px; }
+        .gold-glow { text-shadow: 0 0 10px rgba(212, 197, 169, 0.4); }
+        .active-dot { box-shadow: 0 0 12px rgba(212, 197, 169, 0.6); }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+<!-- SideNavBar (JSON Derived) -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-white/10 bg-surface-container-lowest/80 backdrop-blur-xl flex flex-col h-full py-unit-margin-desktop px-4 z-50">
+<div class="mb-12">
+<h1 class="font-display-lg text-display-lg-mobile tracking-widest text-secondary uppercase">AETHER</h1>
+<p class="text-on-surface-variant font-label-caps mt-1">Premium AI Studio</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-300" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-secondary bg-white/5 border-l-2 border-secondary font-medium" href="#">
+<span class="material-symbols-outlined">add_box</span>
+<span class="font-body-md text-body-md">New Design</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-300" href="#">
+<span class="material-symbols-outlined">folder_open</span>
+<span class="font-body-md text-body-md">My Projects</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-300" href="#">
+<span class="material-symbols-outlined">bookmark</span>
+<span class="font-body-md text-body-md">Saved Designs</span>
+</a>
+</nav>
+<div class="mt-auto space-y-6">
+<button class="w-full bg-secondary text-on-secondary py-3 rounded-lg font-bold uppercase tracking-widest text-[11px] hover:shadow-[0_0_20px_rgba(212,197,169,0.3)] transition-all">
+                Generate Concept
+            </button>
+<div class="space-y-2 border-t border-white/5 pt-6">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-on-surface text-label-sm font-label-sm" href="#">
+<span class="material-symbols-outlined">settings</span> Settings
+                </a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-on-surface text-label-sm font-label-sm" href="#">
+<span class="material-symbols-outlined">help_outline</span> Support
+                </a>
+</div>
+<div class="flex items-center gap-3 px-4">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden border border-white/10">
+<img alt="Architect Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFmiNEtVBQJwPETYdfBqRY_ce_8ZI5BXJksxBisZLvtU3J6m1HAHtncdI_8uXb2l4Km0g73Le-y77ySYvZun97mR-iA4NPkOsE4FlWlNvxAtaNJlJ3ykZnSnuH0qdSTYG31di7rXkizW2qtCJOoS_rZxus7hDqPIhKcD7IZSyE0woZOrPiX0Bsmf68qebqed8fXgEb7JR32DWduNhkEX8WnrT98_9UynfpUcZ213qjIg0-hMwoTQSz9uT7Gg28SCH228ZZPEDtIRM"/>
+</div>
+<div class="text-[12px]">
+<p class="font-semibold text-on-surface">Alex V. Studio</p>
+<p class="text-on-surface-variant">Pro Tier</p>
+</div>
+</div>
+</div>
+</aside>
+<main class="ml-64 min-h-screen bg-background text-on-background pb-20">
+<!-- Progress Wizard -->
+<header class="h-20 bg-surface-dim/40 backdrop-blur-3xl border-b border-white/5 sticky top-0 z-40 flex items-center justify-center px-12">
+<div class="flex items-center gap-4 w-full max-w-4xl">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-secondary/20 text-secondary flex items-center justify-center border border-secondary/40">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</div>
+<span class="text-label-caps text-on-surface-variant hidden md:block">Room Upload</span>
+</div>
+<div class="flex-1 h-[1px] bg-white/10"></div>
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-secondary/20 text-secondary flex items-center justify-center border border-secondary/40">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</div>
+<span class="text-label-caps text-on-surface-variant hidden md:block">Style Analysis</span>
+</div>
+<div class="flex-1 h-[1px] bg-white/10"></div>
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-secondary/20 text-secondary flex items-center justify-center border border-secondary/40">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</div>
+<span class="text-label-caps text-on-surface-variant hidden md:block">Optimization</span>
+</div>
+<div class="flex-1 h-[1px] bg-white/10"></div>
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full border-2 border-secondary bg-secondary text-on-secondary flex items-center justify-center active-dot">
+<span class="text-[12px] font-bold">5</span>
+</div>
+<span class="text-label-caps text-secondary font-bold">Explore Results</span>
+</div>
+</div>
+</header>
+<div class="px-margin-desktop py-12 max-w-7xl mx-auto">
+<!-- Title Section -->
+<div class="mb-12">
+<h2 class="font-display-lg text-display-lg-mobile text-secondary-fixed-dim tracking-tight">Your AI Design Results</h2>
+<p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mt-2">
+                    Explore AI-generated interior concepts based on your room, selected style, and design preferences.
+                </p>
+<!-- Summary Bar -->
+<div class="mt-8 flex flex-wrap gap-4">
+<div class="glass px-6 py-3 rounded-full flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-[20px]">chair</span>
+<span class="text-label-caps uppercase tracking-widest text-[11px]">Living Room</span>
+</div>
+<div class="glass px-6 py-3 rounded-full flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-[20px]">architecture</span>
+<span class="text-label-caps uppercase tracking-widest text-[11px]">Modern Style</span>
+</div>
+<div class="glass px-6 py-3 rounded-full flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-[20px]">payments</span>
+<span class="text-label-caps uppercase tracking-widest text-[11px]">Premium Budget</span>
+</div>
+<div class="glass px-6 py-3 rounded-full flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-[20px]">calendar_today</span>
+<span class="text-label-caps uppercase tracking-widest text-[11px]">Oct 26, 2024</span>
+</div>
+<div class="glass px-6 py-3 rounded-full flex items-center gap-3 border-secondary/20">
+<span class="material-symbols-outlined text-secondary text-[20px]">hub</span>
+<span class="text-label-caps uppercase tracking-widest text-[11px] text-secondary font-bold">98% AI Confidence</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Before & After Comparison -->
+<section class="col-span-12 lg:col-span-8 space-y-12">
+<div class="relative w-full aspect-video rounded-xl overflow-hidden glass group select-none" id="comparison-slider">
+<!-- Before Image -->
+<div class="absolute inset-0">
+<img class="w-full h-full object-cover" data-alt="A wide-angle professional architectural photograph of a completely empty, modern room with polished concrete floors and large floor-to-ceiling glass windows showing a lush green garden outside. The space is bright with soft, natural daylight diffused by the overcast sky. The white walls are pristine and wait for interior design. The mood is minimalist, tranquil, and serves as a blank canvas for architectural visualization." src="https://lh3.googleusercontent.com/aida/AP1WRLt6HHz71rm9ePHS2RpzX8BZaLliou2okiKPHvmO8s8O5vyGPfuGO-P7cud6z3gSmAQvuvPKH25QQatNohewnw4n4vb92l9bpuoN5k0rexxl4-Zez03QqAj3Wa_KSMNG6uwfasfymYyrCdo3L2VEMuIbqwxgZSAoO2ZnFarDWgA37rRs3357ED5mGxinyeYF4wg3ZwxQf5c0Kk-ahHIEMjgTvia6Mp8RZIGbeZFWnTgEysjbnYEqHWgj"/>
+<div class="absolute top-4 left-6 glass px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest bg-black/40">Before</div>
+</div>
+<!-- After Image Overlay -->
+<div class="absolute inset-0 overflow-hidden" id="after-image-container" style="width: 50%;">
+<img class="absolute inset-0 w-full h-full object-cover" data-alt="A high-end, luxury interior design visualization of a modern living room created by AI. The space features a long, curved cream-colored bouclé sofa, elegant marble coffee tables, and sophisticated designer armchairs. Large floor-to-ceiling windows look out over a breathtaking city skyline at dusk. Warm, architectural spotlighting and gold-toned designer lamps create a cozy yet opulent atmosphere. The color palette consists of neutral tones, soft wood accents, and champagne gold metallic finishes." src="https://lh3.googleusercontent.com/aida/AP1WRLtFiXQg4wzM1mn-b7PU2vyFR_4cXALXPXDJZ4X8h5ASXEN6uYd-oP7M745dXVdJ7YJdqF_VbJFId4UVLfAcoPskvEAH39MyHQjwCk1mBr3-ej2pmZPSUgjW_USgeAw_ME4q-aai8MxdT7aSDtTJAMWmZBLDEXHbjxtXREVvbQZnYC1KSYbQHy7o6EhZPuhrzH0I88tV_1V0RGLWpRvggnrS8kV1Op5ufjEIaHH9TJV0rsNCwqx-fjKUfQ" style="width: 200%; max-width: none;"/>
+<div class="absolute top-4 right-6 glass px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest bg-secondary/80 text-on-secondary">AI After</div>
+</div>
+<!-- Slider Handle -->
+<div class="absolute inset-y-0 left-1/2 w-1 bg-secondary shadow-[0_0_15px_rgba(212,197,169,0.5)] z-10 cursor-ew-resize group-hover:bg-white transition-colors" id="slider-handle">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-on-secondary border-4 border-background">
+<span class="material-symbols-outlined text-[20px]">unfold_more</span>
+</div>
+</div>
+</div>
+<!-- Generated Concepts Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Concept A -->
+<div class="glass rounded-xl overflow-hidden glass-card group">
+<div class="relative h-48 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A sophisticated architectural render of a minimalist living room in Concept A. The design features sharp geometric lines, dark smoked oak paneling on one wall, and a low-profile charcoal grey sectional sofa. A large architectural window frames a serene forest view. The lighting is moody and focused, highlighting high-quality material textures like natural stone and brushed steel." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDdy6GSuCQ9BhE6mXE9VscOLemzCkUow9idTgqjixBfEluU1YG8gSfZVkQV_pQgF-AkUG6h4s1eIx3XKxXU4hOUzzR5T3nOOcJg8MC1ejOzEsvtoGHudf3-PWNSEKmGbx1MIwuT8IUi7HGYaMfWZ5VDMyk-rtbzSZnEAV0qkJCAcsasbvQAjNT2EzpZG8ihtuhf_094mvuIeUjWiJ0QHEmz-WxxyHqYVJwNLpaDb3fs81L8FJQsemWy2BuGnj0oRvgi-rSHIjIR84w"/>
+<div class="absolute top-3 right-3 glass px-2 py-1 rounded-md text-[12px] font-bold text-secondary">9.4/10</div>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Concept A</h3>
+<p class="text-label-caps text-on-surface-variant">Modern Monochromatic</p>
+</div>
+<div class="text-right">
+<p class="text-label-caps text-secondary font-bold">96% Match</p>
+<p class="text-[12px] text-on-surface-variant">Est. $42k</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 glass py-2 rounded-lg text-label-caps hover:bg-white/10 transition-colors uppercase">View Details</button>
+<button class="px-3 glass py-2 rounded-lg text-secondary hover:bg-secondary/10 transition-colors">
+<span class="material-symbols-outlined text-[20px]">bookmark</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Concept B -->
+<div class="glass rounded-xl overflow-hidden glass-card group">
+<div class="relative h-48 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="An inviting and organic interior design concept labeled Concept B. This space utilizes soft, flowing shapes and a warm color palette of terracottas and creams. A rounded linen sofa sits on a hand-woven jute rug. Tall indoor plants and soft linen curtains add texture and a connection to nature. Sunlight streams in, creating long, soft shadows across the warm timber flooring." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDF8hN-pusJ1pcWhQBV35pG9QTYoutde5dKa3HzZ5A_KrVHOvOqk8iHDHyU3eph0tTf-PGkfS8inA0UgS3pIJ732zjm_Flgl3bvxLEUqZOUDMRPqNCTMVOORWQ9x08wRVEC3qM9yNvPNP5_zhPe0tyRSm7tDUgafsfuK1cdMuItW-EkXxo6LuweiDTKlrHaROjBaW1rq-n25JaG_gEgoiwY7Jb8YM3ZVBSEKAzpjR1kYdIIx4fxariwKis9IJ0rK1nXsiOvwMERWgA"/>
+<div class="absolute top-3 right-3 glass px-2 py-1 rounded-md text-[12px] font-bold text-secondary">8.9/10</div>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Concept B</h3>
+<p class="text-label-caps text-on-surface-variant">Organic Minimalist</p>
+</div>
+<div class="text-right">
+<p class="text-label-caps text-secondary font-bold">92% Match</p>
+<p class="text-[12px] text-on-surface-variant">Est. $38k</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 glass py-2 rounded-lg text-label-caps hover:bg-white/10 transition-colors uppercase">View Details</button>
+<button class="px-3 glass py-2 rounded-lg text-secondary hover:bg-secondary/10 transition-colors">
+<span class="material-symbols-outlined text-[20px]">bookmark</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Concept C -->
+<div class="glass rounded-xl overflow-hidden glass-card group">
+<div class="relative h-48 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A bold and luxurious architectural visualization for Concept C. The design features a dramatic ceiling with recessed cove lighting that casts a warm glow over a high-end furniture arrangement. A velvet emerald green armchair serves as a centerpiece against neutral beige walls. Sophisticated marble wall panels and gold-finished light fixtures complete the look of a premium, modern penthouse lounge." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkzz4ztBGarsYV1x8P2nN1z2Y4FZExSo-t_RxkUmp_qqw2NHOtk1KCgWElWtN7S31BXBabsaiUq8XEC5Gp6ssYtafOFxHj1-mqMHBzNtAuU09V2yk8yD6TYwH5Zpreoh1HaigUOvaGjpaRXGmGenPzBB65Qb6Bx2opcmWMFa_pKMkAopTlh78u_Rp7IGUV1xMRzyC49_CUeegR7KeGMQkyzgBX3K4BJPrC46LBNvRAnaoAU7JCp7Zs8mR6G32nN2Ja5bQA6v0iAGY"/>
+<div class="absolute top-3 right-3 glass px-2 py-1 rounded-md text-[12px] font-bold text-secondary">9.1/10</div>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Concept C</h3>
+<p class="text-label-caps text-on-surface-variant">Bold Luxury</p>
+</div>
+<div class="text-right">
+<p class="text-label-caps text-secondary font-bold">88% Match</p>
+<p class="text-[12px] text-on-surface-variant">Est. $65k</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 glass py-2 rounded-lg text-label-caps hover:bg-white/10 transition-colors uppercase">View Details</button>
+<button class="px-3 glass py-2 rounded-lg text-secondary hover:bg-secondary/10 transition-colors">
+<span class="material-symbols-outlined text-[20px]">bookmark</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Concept D -->
+<div class="glass rounded-xl overflow-hidden glass-card group">
+<div class="relative h-48 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A clean and functional interior concept for Concept D, focusing on space optimization. The design features custom integrated shelving units that blend seamlessly with the walls. A sleek, modern desk is positioned near the window to take advantage of natural light. The furniture is modular and versatile, presented in a palette of light grey and white with subtle blue accents, creating a calm work-from-home environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXp1iIo8LSV7PdzTK5AE96qw65CYamHbWB1dC4QrGgXHkJxS7ftqNqAQpET_ukcBxY0HK51oE3Tk7fFIt2gkZd-wdGTIWg8K0eW67lJdNnAEJwF2hsDOIaBNDth5rO1Igt5vFgbFEi4jJAyKCns6WR6yrm79n23TEeZzzUhoMs5y9xYu6Sx9lCf5qYhZslQJnFwT6X6u_ybu3tltlAiBGibxkzSJc2RQlY4_xdM1hfSIJTTWprXtMqABEtlyYRUcxlDc1LGO2BtU8"/>
+<div class="absolute top-3 right-3 glass px-2 py-1 rounded-md text-[12px] font-bold text-secondary">8.7/10</div>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Concept D</h3>
+<p class="text-label-caps text-on-surface-variant">Functional Hub</p>
+</div>
+<div class="text-right">
+<p class="text-label-caps text-secondary font-bold">85% Match</p>
+<p class="text-[12px] text-on-surface-variant">Est. $29k</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 glass py-2 rounded-lg text-label-caps hover:bg-white/10 transition-colors uppercase">View Details</button>
+<button class="px-3 glass py-2 rounded-lg text-secondary hover:bg-secondary/10 transition-colors">
+<span class="material-symbols-outlined text-[20px]">bookmark</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- AI Insights Panel -->
+<aside class="col-span-12 lg:col-span-4 space-y-6">
+<div class="glass rounded-xl p-8 sticky top-24">
+<div class="flex items-center gap-3 mb-8">
+<div class="w-10 h-10 rounded-lg bg-secondary/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">auto_awesome</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">AI Insights</h3>
+<p class="text-label-caps text-on-surface-variant uppercase tracking-widest text-[10px]">Studio Analysis</p>
+</div>
+</div>
+<div class="space-y-8">
+<!-- Materials -->
+<div>
+<h4 class="text-label-caps text-secondary mb-4 uppercase tracking-tighter">Recommended Materials</h4>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-label-sm">Polished Concrete</span>
+<span class="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-label-sm">Smoked Oak</span>
+<span class="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-label-sm">Bouclé Fabric</span>
+<span class="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-label-sm">Brushed Brass</span>
+<span class="px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-label-sm">White Carrara Marble</span>
+</div>
+</div>
+<!-- Furniture -->
+<div>
+<h4 class="text-label-caps text-secondary mb-4 uppercase tracking-tighter">Suggested Furniture</h4>
+<div class="space-y-3">
+<div class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group">
+<div class="w-12 h-12 rounded bg-surface-container flex-shrink-0 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A detailed image of a high-end curved bouclé sofa in a neutral cream color. The texture of the fabric is soft and bumpy, typical of premium bouclé. The sofa has a low profile and modern organic silhouette, fitting perfectly in a luxury architectural setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8m2vs4MgySdrWmaz7kCSGJ9sSSqXb99frB1lzcX4Frfo2_c4ZvR0kKJ6gfylH2TxjnVBq4wbcNOY_NX5TXNdeLqBvKrylKe2-iE2xThXHCvrv-abVgXfU-OitlKYh3GpIgT13CtyN0AMUG0MTwfmD4LZAf8ZRps_nE49nvulQ4KYToBM37SPtWad4TP4sBXDSJaFBiye8DugcuGICyIvTrEKKEnTkpjMdIrmdPoomv7BB8q3KJOAoXMyFlxAZFQTijSMGfcpajGw"/>
+</div>
+<div>
+<p class="text-label-sm text-on-surface font-semibold">Organic Curved Sofa</p>
+<p class="text-[11px] text-on-surface-variant">Ligne Roset Inspired</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-on-surface-variant text-[18px] opacity-0 group-hover:opacity-100 transition-opacity">shopping_cart</span>
+</div>
+<div class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group">
+<div class="w-12 h-12 rounded bg-surface-container flex-shrink-0 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A close-up of a low marble coffee table with a unique sculptural base made of dark wood. The marble top features dramatic grey veining. It is positioned on a high-pile beige rug, highlighting the contrast in textures between the cold stone and soft fabric." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjOap97n_0p4yyabNEUvtopkeFZiizqaNrfwfc03VWzkw1DqyOgeU4rXpEc2Qm4kf5f0mCNWDdJaRirizb3M1sZbIW8bEqWS0uXBlgJCK5HJjsFLnSrzOgEsmh0LwKKjL0J5C2saC9ViqHEYfmIaMHzunYZn_6wjlsAaKhj2kcmyirIWubDrmEAbEhHM8xVauNkYkJDzHAhHbeav1CJy_fyYhBJhbWAV1jRBBXj4VejMn73ihUmHHkkJvpQQwRyksbSkdTjvVuWEM"/>
+</div>
+<div>
+<p class="text-label-sm text-on-surface font-semibold">Sculptural Marble Table</p>
+<p class="text-[11px] text-on-surface-variant">Minotti Style</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-on-surface-variant text-[18px] opacity-0 group-hover:opacity-100 transition-opacity">shopping_cart</span>
+</div>
+</div>
+</div>
+<!-- Optimization Notes -->
+<div class="p-4 rounded-xl bg-secondary/5 border border-secondary/10">
+<h4 class="text-label-caps text-secondary mb-2 flex items-center gap-2 uppercase tracking-tighter">
+<span class="material-symbols-outlined text-[16px]">tips_and_updates</span>
+                                    Space Optimization
+                                </h4>
+<p class="text-label-sm text-on-surface-variant leading-relaxed">
+                                    Based on the window orientation, AETHER suggests placing high-reflectance surfaces opposite the glass to maximize natural light penetration during morning hours.
+                                </p>
+</div>
+</div>
+<button class="w-full mt-8 py-4 border border-white/10 rounded-xl font-label-caps text-secondary hover:bg-white/5 transition-all flex items-center justify-center gap-2 uppercase">
+<span class="material-symbols-outlined">analytics</span>
+                            Detailed Style Report
+                        </button>
+</div>
+</aside>
+</div>
+</div>
+</main>
+<!-- Action Bar (Floating at Bottom) -->
+<div class="fixed bottom-8 left-64 right-0 px-margin-desktop z-50 pointer-events-none">
+<div class="max-w-7xl mx-auto flex justify-between items-center glass p-4 rounded-2xl shadow-2xl pointer-events-auto border-secondary/20">
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-6 py-3 rounded-xl bg-secondary text-on-secondary font-bold text-label-sm hover:shadow-[0_0_20px_rgba(212,197,169,0.4)] transition-all">
+<span class="material-symbols-outlined">3d_rotation</span>
+                    Open 3D Walkthrough
+                </button>
+<button class="flex items-center gap-2 px-6 py-3 rounded-xl glass hover:bg-white/10 transition-colors text-label-sm text-on-surface font-semibold">
+<span class="material-symbols-outlined">save</span>
+                    Save Design
+                </button>
+</div>
+<div class="flex gap-2">
+<button class="w-12 h-12 flex items-center justify-center glass rounded-xl text-on-surface-variant hover:text-secondary transition-colors" title="Download HD">
+<span class="material-symbols-outlined">download</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center glass rounded-xl text-on-surface-variant hover:text-secondary transition-colors" title="Export PDF">
+<span class="material-symbols-outlined">picture_as_pdf</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center glass rounded-xl text-on-surface-variant hover:text-secondary transition-colors" title="Generate More">
+<span class="material-symbols-outlined">refresh</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+        // Interactive Slider Logic
+        const slider = document.getElementById('comparison-slider');
+        const afterContainer = document.getElementById('after-image-container');
+        const handle = document.getElementById('slider-handle');
+        const afterImg = afterContainer.querySelector('img');
+
+        let isResizing = false;
+
+        const updateSlider = (x) => {
+            const rect = slider.getBoundingClientRect();
+            let position = ((x - rect.left) / rect.width) * 100;
+            
+            if (position < 0) position = 0;
+            if (position > 100) position = 100;
+
+            afterContainer.style.width = `${position}%`;
+            handle.style.left = `${position}%`;
+            
+            // To prevent distortion, we need to adjust the width of the image inside
+            // afterImg is already set to 200% width relative to afterContainer (which starts at 50%)
+            // Let's use object-fit and fixed sizing logic
+            const containerWidth = rect.width;
+            afterImg.style.width = `${containerWidth}px`;
+        };
+
+        const handleMove = (e) => {
+            if (!isResizing) return;
+            const x = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            updateSlider(x);
+        };
+
+        handle.addEventListener('mousedown', () => isResizing = true);
+        window.addEventListener('mouseup', () => isResizing = false);
+        window.addEventListener('mousemove', handleMove);
+
+        handle.addEventListener('touchstart', () => isResizing = true);
+        window.addEventListener('touchend', () => isResizing = false);
+        window.addEventListener('touchmove', handleMove);
+
+        // Initialize After Image Sizing
+        window.addEventListener('resize', () => {
+            const rect = slider.getBoundingClientRect();
+            afterImg.style.width = `${rect.width}px`;
+        });
+        
+        // Trigger initial size
+        setTimeout(() => {
+            const rect = slider.getBoundingClientRect();
+            afterImg.style.width = `${rect.width}px`;
+        }, 100);
+
+        // Micro-interaction for Concept Cards
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-4px)';
+                card.style.transition = 'transform 0.3s ease';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+
+<!-- AETHER_WIRED -->
+<script src="../shared/aether.js" defer></script>
+</body></html>
