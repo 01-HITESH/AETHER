@@ -11,7 +11,114 @@ AETHER is a local interior redesign and 360 walkthrough app. Upload a room photo
 - Tracks saved and favorite tours.
 - Exports redesigns, panoramas, reports, and JSON payloads.
 
-## Run Locally
+## Run From GitHub On Another System
+
+These steps are for someone cloning the project from GitHub on a new computer.
+
+### 1. Install Prerequisites
+
+Install these first:
+
+- Git: https://git-scm.com/downloads
+- Python 3.10 or newer: https://www.python.org/downloads/
+
+During Python installation on Windows, enable **Add python.exe to PATH**.
+
+Check both tools:
+
+```powershell
+git --version
+python --version
+pip --version
+```
+
+If `python` opens the Microsoft Store on Windows, install Python from python.org or disable the Windows app execution alias for Python in Windows settings.
+
+### 2. Clone The Repository
+
+```powershell
+git clone https://github.com/01-HITESH/AETHER.git
+cd AETHER
+```
+
+### 3. Create A Virtual Environment
+
+Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+Windows Command Prompt:
+
+```bat
+python -m venv .venv
+.venv\Scripts\activate.bat
+```
+
+macOS or Linux:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 4. Install Dependencies
+
+```powershell
+pip install -r BACKEND\requirements.txt
+```
+
+On macOS or Linux, use forward slashes:
+
+```bash
+pip install -r BACKEND/requirements.txt
+```
+
+### 5. Start The App
+
+Windows PowerShell:
+
+```powershell
+.\run.ps1
+```
+
+Windows Command Prompt:
+
+```bat
+run.bat
+```
+
+macOS or Linux:
+
+```bash
+PYTHONPATH=. python3 -m uvicorn BACKEND.app:app --host 127.0.0.1 --port 8000 --reload
+```
+
+### 6. Open In Browser
+
+```text
+http://127.0.0.1:8000/app/
+```
+
+The API health check is available at:
+
+```text
+http://127.0.0.1:8000/api/health
+```
+
+### 7. First Use
+
+1. Register with any email and password.
+2. Upload a JPG or PNG room photo under 20 MB.
+3. Select room type, style, and requirements.
+4. Generate the redesign.
+5. Open the 3D walkthrough or export the result.
+
+No external API key is required.
+
+## Run Locally In This Workspace
 
 ```powershell
 cd "C:\2.0 project"
@@ -24,7 +131,7 @@ Open:
 http://127.0.0.1:8000/app/
 ```
 
-## Requirements
+## Dependencies
 
 - Python 3.10+
 - `fastapi`
@@ -91,7 +198,10 @@ This build does not call a hosted AI image model. The redesign is generated loca
 
 ## Troubleshooting
 
-- If the app does not start, confirm the dependencies are installed.
+- If the app does not start, confirm the virtual environment is activated and dependencies are installed.
+- If PowerShell blocks `run.ps1`, run `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` and then run `.\run.ps1` again.
+- If port 8000 is already in use, stop the other process or start Uvicorn with a different port such as `--port 8001`.
+- If `python` opens Microsoft Store, install Python from python.org and make sure it is on PATH.
 - If uploads fail, use JPG or PNG under 20 MB.
 - If the viewer is blank, confirm a tour was generated and the panorama file exists in `BACKEND/data/tours/`.
 
