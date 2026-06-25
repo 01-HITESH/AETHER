@@ -111,6 +111,12 @@
     },
     me: function () { return this.request("/me"); },
     patchMe: function (patch) { return this.request("/me", { method: "PATCH", json: patch }); },
+    patchPassword: function (currentPassword, newPassword) {
+      return this.request("/me/password", {
+        method: "PATCH",
+        json: { currentPassword: currentPassword, newPassword: newPassword },
+      });
+    },
 
     upload: function (file) {
       var fd = new FormData();
@@ -355,8 +361,21 @@
   Pages.aether_dashboard = function () {
     var u = AetherAPI.getUser();
     $all("[data-aether-username]").forEach(function (el) { el.textContent = u.name || "Designer"; });
+    AetherAPI.me().then(function (res) {
+      syncDashboardStats(res.stats || {});
+      if (res.user) {
+        AetherAPI.setUser(res.user);
+        $all("[data-aether-username]").forEach(function (el) { el.textContent = res.user.name || "Designer"; });
+      }
+    }).catch(function () {});
     AetherAPI.listTours().then(function (res) {
-      renderTourCards(res.tours || []);
+      var tours = res.tours || [];
+      syncDashboardStats({
+        projects: tours.length,
+        saved: tours.filter(function (t) { return t.saved; }).length,
+        favorites: tours.filter(function (t) { return t.favorite; }).length,
+      });
+      renderTourCards(tours);
     }).catch(function () {});
   };
 
@@ -602,13 +621,7 @@
       var tour = res.tour;
       Draft.set({ tourId: tour.id });
       populateTourText(tour);
-      // Point any before/after images at the real source vs panorama.
-      var imgs = $all("img");
-      if (imgs[0] && tour.source_url) imgs[0].src = tour.source_url;
-      // Background-image style "after" panels -> panorama thumbnail.
-      $all("[style*='background-image']").forEach(function (el, i) {
-        if (i === 0 && tour.thumb_url) el.style.backgroundImage = "url('" + tour.thumb_url + "')";
-      });
+      bindTourImages(tour);
     }).catch(function () {});
   }
   Pages.aether_explore_results = resultsModule;
@@ -627,9 +640,9 @@
       wireExportButtons(id);
       wireIconButtons(id);
       if (tours[0]) {
-        var t = tours[0];
+        var t = tours.filter(function (tour) { return tour.id === id; })[0] || tours[0];
         populateTourText(t);
-        $all("[style*='background-image']").forEach(function (el, i) { if (i === 0 && t.thumb_url) el.style.backgroundImage = "url('" + t.thumb_url + "')"; });
+        bindTourImages(t);
       }
     }).catch(function () {
       if (open) open.addEventListener("click", function (e) { e.preventDefault(); location.href = page("aether_interactive_3d_walkthrough"); });
@@ -646,8 +659,13 @@
 
   // ---- Profile settings -----------------------------------------------------
   Pages.aether_profile_settings = function () {
+    var currentUser = null;
     AetherAPI.me().then(function (res) {
       var u = res.user, s = res.stats;
+      currentUser = u;
+      AetherAPI.setUser(u);
+      syncProfileIdentity(u);
+      syncDashboardStats(s || {});
       $all("[data-aether-username]").forEach(function (el) { el.textContent = u.name; });
       $all("[data-aether-email]").forEach(function (el) { el.textContent = u.email; });
       $all("[data-aether-stat-projects]").forEach(function (el) { el.textContent = s.projects; });
@@ -663,8 +681,12 @@
         $all("input[type='checkbox']").forEach(function (input, i) { settings["toggle_" + (i + 1)] = input.checked; });
         var range = $("input[type='range']");
         if (range) settings.design_intensity = Number(range.value);
-        AetherAPI.patchMe({ settings: settings }).then(function (res) {
+        var patch = { settings: settings };
+        if (currentUser && currentUser.name) patch.name = currentUser.name;
+        AetherAPI.patchMe(patch).then(function (res) {
+          currentUser = res.user;
           AetherAPI.setUser(res.user);
+          syncProfileIdentity(res.user);
           toast("Profile settings saved.");
         }).catch(function (err) { toast(err.message || "Could not save settings.", "error"); });
       });
@@ -674,6 +696,7 @@
       cancel.dataset.aetherHandled = "1";
       cancel.addEventListener("click", function (e) { e.preventDefault(); location.href = page("aether_dashboard"); });
     }
+    wireProfileAccountActions(function () { return currentUser; }, function (u) { currentUser = u; });
   };
 
   // The 3D viewer pages are handled by pano-viewer.js; nothing extra needed here,
@@ -720,6 +743,48 @@
     if (range && settings.design_intensity !== undefined) range.value = settings.design_intensity;
   }
 
+  function wireProfileAccountActions(getUser, setUser) {
+    $all("button").forEach(function (btn) {
+      var t = actionText(btn).toLowerCase();
+      if (t.indexOf("edit profile information") >= 0) {
+        btn.dataset.aetherHandled = "1";
+        btn.addEventListener("click", function (e) {
+          e.preventDefault();
+          var user = getUser() || AetherAPI.getUser();
+          var name = prompt("Profile name", user.name || "Designer");
+          if (name === null) return;
+          name = name.trim();
+          if (!name) { toast("Profile name cannot be empty.", "error"); return; }
+          AetherAPI.patchMe({ name: name }).then(function (res) {
+            setUser(res.user);
+            AetherAPI.setUser(res.user);
+            syncProfileIdentity(res.user);
+            toast("Profile updated.");
+          }).catch(function (err) { toast(err.message || "Could not update profile.", "error"); });
+        });
+      } else if (t.indexOf("change password") >= 0) {
+        btn.dataset.aetherHandled = "1";
+        btn.addEventListener("click", function (e) {
+          e.preventDefault();
+          var currentPassword = prompt("Current password");
+          if (currentPassword === null) return;
+          var newPassword = prompt("New password");
+          if (newPassword === null) return;
+          if (newPassword.length < 4) { toast("New password must be at least 4 characters.", "error"); return; }
+          AetherAPI.patchPassword(currentPassword, newPassword).then(function () {
+            toast("Password updated.");
+          }).catch(function (err) { toast(err.message || "Could not update password.", "error"); });
+        });
+      } else if (t.indexOf("two-factor") >= 0 || t.indexOf("active sessions") >= 0) {
+        btn.dataset.aetherHandled = "1";
+        btn.addEventListener("click", function (e) {
+          e.preventDefault();
+          toast("This account setting is tracked locally in this build.");
+        });
+      }
+    });
+  }
+
   function populateTourText(tour) {
     if (!tour) return;
     $all("h1,h2,h3,h4,p,span").forEach(function (el) {
@@ -728,6 +793,156 @@
         if (/obsidian lounge|modern .* living room/i.test(t)) el.textContent = tour.title || t;
         else if (/living room .* modern/i.test(t)) el.textContent = (tour.room_label || "") + " / " + (tour.style_label || "");
       }
+    });
+    applyRequirementText(tour);
+  }
+
+  function asset(tour, kind) {
+    if (!tour) return "";
+    if (kind === "source") return tour.source_url || "";
+    if (kind === "redesign") return tour.redesign_url || tour.thumb_url || tour.pano_url || "";
+    if (kind === "pano") return tour.pano_url || tour.redesign_url || tour.thumb_url || "";
+    return tour.thumb_url || tour.redesign_url || tour.pano_url || tour.source_url || "";
+  }
+
+  function bindTourImages(tour) {
+    if (!tour) return;
+    var source = asset(tour, "source");
+    var redesign = asset(tour, "redesign");
+    var thumb = asset(tour, "thumb");
+    var pano = asset(tour, "pano");
+
+    $all("img").forEach(function (img) {
+      var context = (
+        (img.getAttribute("alt") || "") + " " +
+        (img.getAttribute("data-alt") || "") + " " +
+        contextText(img)
+      ).toLowerCase();
+      if (/account|profile|architect profile|avatar/.test(context)) return;
+      if (/before|original|empty room|existing/.test(context)) setImage(img, source);
+      else if (/after|generated|redesign|visualization|concept|render|interior design/.test(context)) setImage(img, redesign || thumb);
+      else if (/panorama|360|walkthrough/.test(context)) setImage(img, pano);
+      else if (img.closest("#comparison-slider,#slider-container,.comparison-after,#after-image,#slider-after")) setImage(img, redesign || thumb);
+    });
+
+    var comparison = $("#comparison-slider") || $("#slider-container");
+    if (comparison) {
+      var imgs = $all("img", comparison).filter(function (img) {
+        return !/account|profile|avatar/i.test((img.getAttribute("alt") || "") + " " + (img.getAttribute("data-alt") || ""));
+      });
+      if (imgs[0]) setImage(imgs[0], source);
+      if (imgs[1]) setImage(imgs[1], redesign || thumb);
+    }
+    var interactive = $("#slider-after");
+    if (interactive) {
+      var afterImg = $("img", interactive);
+      if (afterImg) setImage(afterImg, redesign || thumb);
+      var beforeImg = interactive.parentElement && $("img", interactive.parentElement);
+      if (beforeImg) setImage(beforeImg, source);
+    }
+
+    $all("[style*='background-image']").forEach(function (el) {
+      var label = contextText(el).toLowerCase();
+      if (/before|upload|source|original/.test(label)) setBackground(el, source);
+      else setBackground(el, thumb || redesign || pano);
+    });
+
+    updateComparisonSizing();
+  }
+
+  function contextText(el) {
+    var bits = [];
+    var node = el;
+    for (var i = 0; node && i < 3; i++, node = node.parentElement) {
+      bits.push(node.id || "");
+      bits.push(node.className || "");
+      bits.push(node.getAttribute && (node.getAttribute("aria-label") || ""));
+    }
+    return bits.join(" ");
+  }
+
+  function setImage(img, url) {
+    if (!img || !url) return;
+    img.src = url;
+    img.removeAttribute("srcset");
+    img.removeAttribute("data-alt");
+    img.loading = "eager";
+    img.decoding = "async";
+  }
+
+  function setBackground(el, url) {
+    if (!el || !url) return;
+    el.style.backgroundImage = "url('" + url + "')";
+  }
+
+  function updateComparisonSizing() {
+    var afterContainer = $("#after-image-container");
+    var comparison = $("#comparison-slider");
+    if (afterContainer && comparison) {
+      var afterImg = $("img", afterContainer);
+      if (afterImg) {
+        var rect = comparison.getBoundingClientRect();
+        afterImg.style.width = Math.max(1, rect.width) + "px";
+        afterImg.style.height = Math.max(1, rect.height) + "px";
+        afterImg.style.maxWidth = "none";
+      }
+    }
+  }
+
+  function applyRequirementText(tour) {
+    var req = tour.requirements || {};
+    var notes = (req.notes || "").toString();
+    if (!notes) return;
+    $all("p").forEach(function (el) {
+      var t = textOf(el);
+      if (/maximize natural light|specific brands|constraints|atmosphere|functionality|design goals/i.test(t)) {
+        el.textContent = notes.length > 180 ? notes.slice(0, 177) + "..." : notes;
+      }
+    });
+  }
+
+  function syncDashboardStats(stats) {
+    var projects = Number(stats.projects || 0);
+    var saved = Number(stats.saved || 0);
+    var favorites = Number(stats.favorites || 0);
+    setMetric("designs generated", projects);
+    setMetric("3d models created", projects);
+    setMetric("360", projects);
+    setMetric("saved designs", saved);
+    setMetric("favorites", favorites);
+    $all("[data-aether-stat-projects]").forEach(function (el) { el.textContent = projects; });
+    $all("[data-aether-stat-saved]").forEach(function (el) { el.textContent = saved; });
+    $all("[data-aether-stat-favorites]").forEach(function (el) { el.textContent = favorites; });
+  }
+
+  function syncProfileIdentity(user) {
+    if (!user) return;
+    $all("h1,h2,h3,h4,p,span").forEach(function (el) {
+      var t = textOf(el);
+      if (/alexander thorne|alex thorne|designer$/i.test(t) && user.name) {
+        el.textContent = user.name;
+      } else if (/alex\.thorne@studio\.aether|@/.test(t) && t.indexOf("mailto:") < 0 && user.email) {
+        if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t)) el.textContent = user.email;
+      } else if (/member since/i.test(t) && user.created_at) {
+        el.textContent = "Member since " + formatDate(user.created_at);
+      }
+    });
+  }
+
+  function formatDate(value) {
+    var d = new Date(value);
+    if (isNaN(d.getTime())) return value;
+    return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  }
+
+  function setMetric(label, value) {
+    $all("p,span").forEach(function (el) {
+      var t = textOf(el).toLowerCase();
+      if (t.indexOf(label) < 0) return;
+      var box = el.parentElement;
+      if (!box) return;
+      var values = $all("p,span", box).filter(function (v) { return v !== el && /^\d+$/.test(textOf(v)); });
+      if (values[0]) values[0].textContent = String(value);
     });
   }
 
@@ -843,10 +1058,11 @@
       var card = template.cloneNode(true);
       card.dataset.aetherTourId = t.id;
       card.style.display = "";
+      var preview = asset(t, "thumb");
       var img = card.querySelector("img");
-      if (img && t.thumb_url) { img.src = t.thumb_url; img.removeAttribute("data-alt"); }
+      if (img && preview) { img.src = preview; img.removeAttribute("data-alt"); img.removeAttribute("srcset"); }
       card.querySelectorAll("[style*='background-image']").forEach(function (el) {
-        if (t.thumb_url) el.style.backgroundImage = "url('" + t.thumb_url + "')";
+        if (preview) el.style.backgroundImage = "url('" + preview + "')";
       });
       var h = card.querySelector("h1,h2,h3,h4,h5");
       if (h) h.textContent = t.title;

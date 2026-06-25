@@ -26,10 +26,12 @@ from pydantic import BaseModel, Field
 ROOT = Path(__file__).resolve().parents[1]
 FRONTEND_DIR = ROOT / "FRONTEND"
 DATA_DIR = ROOT / "BACKEND" / "data"
+DATABASE_DIR = DATA_DIR / "database"
 UPLOADS_DIR = DATA_DIR / "uploads"
 TOURS_DIR = DATA_DIR / "tours"
 EXPORTS_DIR = DATA_DIR / "exports"
-DB_PATH = DATA_DIR / "aether.sqlite3"
+LEGACY_DB_PATH = DATA_DIR / "aether.sqlite3"
+DB_PATH = DATABASE_DIR / "aether.sqlite3"
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/jpg"}
@@ -69,6 +71,19 @@ STYLE_TINTS = {
     "classical": (1.05, 1.01, 0.96),
 }
 
+STYLE_PALETTES = {
+    "modern": {"wall": (226, 228, 226), "floor": (138, 136, 130), "textile": (58, 62, 65), "accent": (214, 197, 169)},
+    "minimalist": {"wall": (244, 242, 237), "floor": (185, 181, 170), "textile": (231, 228, 220), "accent": (126, 140, 145)},
+    "luxury": {"wall": (231, 222, 210), "floor": (96, 86, 78), "textile": (58, 48, 54), "accent": (212, 174, 92)},
+    "scandinavian": {"wall": (240, 239, 230), "floor": (199, 174, 139), "textile": (220, 225, 218), "accent": (86, 123, 116)},
+    "japanese_zen": {"wall": (225, 221, 207), "floor": (164, 142, 112), "textile": (183, 184, 161), "accent": (86, 112, 83)},
+    "industrial": {"wall": (112, 116, 118), "floor": (72, 70, 68), "textile": (44, 48, 52), "accent": (177, 128, 82)},
+    "contemporary": {"wall": (228, 230, 231), "floor": (145, 142, 137), "textile": (42, 54, 69), "accent": (94, 145, 164)},
+    "traditional": {"wall": (228, 216, 197), "floor": (128, 85, 55), "textile": (109, 73, 59), "accent": (187, 145, 91)},
+    "bohemian": {"wall": (232, 216, 197), "floor": (163, 108, 72), "textile": (184, 92, 70), "accent": (83, 130, 109)},
+    "classical": {"wall": (231, 226, 215), "floor": (122, 103, 82), "textile": (86, 83, 94), "accent": (201, 178, 122)},
+}
+
 
 class LoginPayload(BaseModel):
     email: str
@@ -82,6 +97,11 @@ class RegisterPayload(LoginPayload):
 class ProfilePatch(BaseModel):
     name: str | None = None
     settings: dict[str, Any] | None = None
+
+
+class PasswordPatch(BaseModel):
+    currentPassword: str
+    newPassword: str
 
 
 class TourCreatePayload(BaseModel):
@@ -99,8 +119,16 @@ def utc_now() -> str:
 
 
 def ensure_dirs() -> None:
-    for path in (DATA_DIR, UPLOADS_DIR, TOURS_DIR, EXPORTS_DIR):
+    for path in (DATA_DIR, DATABASE_DIR, UPLOADS_DIR, TOURS_DIR, EXPORTS_DIR):
         path.mkdir(parents=True, exist_ok=True)
+    if LEGACY_DB_PATH.exists() and not DB_PATH.exists():
+        src = sqlite3.connect(LEGACY_DB_PATH)
+        dst = sqlite3.connect(DB_PATH)
+        try:
+            src.backup(dst)
+        finally:
+            dst.close()
+            src.close()
 
 
 def db() -> sqlite3.Connection:
@@ -155,6 +183,7 @@ def init_db() -> None:
                 style TEXT NOT NULL,
                 requirements_json TEXT NOT NULL DEFAULT '{}',
                 metadata_json TEXT NOT NULL DEFAULT '{}',
+                redesign_path TEXT NOT NULL DEFAULT '',
                 pano_path TEXT NOT NULL,
                 thumb_path TEXT NOT NULL,
                 source_path TEXT NOT NULL,
@@ -167,6 +196,13 @@ def init_db() -> None:
             );
             """
         )
+        ensure_column(conn, "tours", "redesign_path", "TEXT NOT NULL DEFAULT ''")
+
+
+def ensure_column(conn: sqlite3.Connection, table: str, column: str, definition: str) -> None:
+    cols = {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
+    if column not in cols:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
 
 
 @app.on_event("startup")
@@ -284,6 +320,300 @@ def apply_style_tint(image: Image.Image, style: str) -> Image.Image:
     return result
 
 
+def style_palette(style: str) -> dict[str, tuple[int, int, int]]:
+    return STYLE_PALETTES.get(style, STYLE_PALETTES["modern"])
+
+
+def fit_max(image: Image.Image, max_side: int) -> Image.Image:
+    out = image.copy()
+    if max(out.size) > max_side:
+        out.thumbnail((max_side, max_side), Image.Resampling.LANCZOS)
+    return out
+
+
+def make_redesign(source: Image.Image, style: str, room_type: str, requirements: dict[str, Any]) -> tuple[Image.Image, dict[str, Any]]:
+    """Create a sharp local redesign render from the uploaded room photo."""
+    src = fit_max(ImageOps.exif_transpose(source).convert("RGB"), 1800)
+    base = ImageEnhance.Sharpness(src).enhance(1.18)
+    base = ImageEnhance.Contrast(base).enhance(1.06)
+    base = ImageEnhance.Color(base).enhance(0.96)
+    base = apply_style_tint(base, style)
+
+    w, h = base.size
+    p = style_palette(style)
+    wall, floor, textile, accent = p["wall"], p["floor"], p["textile"], p["accent"]
+    overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay, "RGBA")
+
+    horizon = int(h * 0.52)
+    cx = w // 2
+    lw = max(2, w // 700)
+
+    draw.rectangle((0, 0, w, horizon), fill=wall + (46,))
+    draw.polygon([(0, horizon), (w, horizon), (w, h), (0, h)], fill=floor + (64,))
+    draw.line((0, horizon, w, horizon), fill=accent + (92,), width=lw)
+    draw_perspective_floor(draw, w, h, horizon, accent, lw)
+    draw_wall_features(draw, w, h, horizon, style, accent, textile, lw)
+
+    if room_type == "bedroom":
+        draw_bedroom(draw, w, h, horizon, textile, accent, lw)
+    elif room_type == "kitchen":
+        draw_kitchen(draw, w, h, horizon, wall, floor, textile, accent, lw)
+    elif room_type == "bathroom":
+        draw_bathroom(draw, w, h, horizon, wall, floor, textile, accent, lw)
+    elif room_type == "office":
+        draw_office(draw, w, h, horizon, textile, accent, lw)
+    elif room_type == "hall":
+        draw_hall(draw, w, h, horizon, textile, accent, lw)
+    else:
+        draw_living_room(draw, w, h, horizon, textile, accent, lw)
+
+    draw_lighting(draw, w, h, accent, lw)
+    draw_requirements_badges(draw, w, h, requirements, accent, lw)
+
+    result = Image.alpha_composite(base.convert("RGBA"), overlay).convert("RGB")
+    result = ImageEnhance.Contrast(result).enhance(1.04)
+    result = result.filter(ImageFilter.UnsharpMask(radius=1.1, percent=120, threshold=3))
+
+    metadata = {
+        "generation": "local_redesign_render_v2",
+        "width": result.width,
+        "height": result.height,
+        "room_type": room_type,
+        "style": style,
+        "requirements_applied": summarize_requirements(requirements),
+        "note": "Local deterministic redesign render generated from the uploaded room photo and selected preferences.",
+    }
+    return result, metadata
+
+
+def draw_perspective_floor(
+    draw: ImageDraw.ImageDraw,
+    w: int,
+    h: int,
+    horizon: int,
+    accent: tuple[int, int, int],
+    lw: int,
+) -> None:
+    cx = w // 2
+    for x in range(-w // 2, int(w * 1.55), max(120, w // 8)):
+        draw.line((cx, horizon + h // 18, x, h), fill=accent + (34,), width=max(1, lw // 2))
+    for y in range(horizon + h // 9, h, max(90, h // 10)):
+        draw.line((0, y, w, y), fill=(255, 255, 255, 24), width=max(1, lw // 2))
+
+
+def draw_wall_features(
+    draw: ImageDraw.ImageDraw,
+    w: int,
+    h: int,
+    horizon: int,
+    style: str,
+    accent: tuple[int, int, int],
+    textile: tuple[int, int, int],
+    lw: int,
+) -> None:
+    panel_top = int(h * 0.16)
+    panel_bottom = int(horizon * 0.82)
+    panel_w = int(w * 0.16)
+    gap = int(w * 0.035)
+    start = w // 2 - panel_w - gap // 2
+    for i in range(2):
+        x0 = start + i * (panel_w + gap)
+        draw.rounded_rectangle(
+            (x0, panel_top, x0 + panel_w, panel_bottom),
+            radius=max(10, w // 90),
+            fill=accent + (34 if style != "industrial" else 52,),
+            outline=accent + (108,),
+            width=lw,
+        )
+        inset = max(8, w // 90)
+        draw.line((x0 + inset, panel_top + inset, x0 + panel_w - inset, panel_bottom - inset), fill=textile + (68,), width=lw)
+    shelf_y = int(h * 0.36)
+    draw.rounded_rectangle((int(w * 0.08), shelf_y, int(w * 0.25), shelf_y + lw * 2), radius=lw, fill=accent + (150,))
+    draw.rounded_rectangle((int(w * 0.75), shelf_y, int(w * 0.92), shelf_y + lw * 2), radius=lw, fill=accent + (150,))
+
+
+def draw_lighting(draw: ImageDraw.ImageDraw, w: int, h: int, accent: tuple[int, int, int], lw: int) -> None:
+    for x in (int(w * 0.28), int(w * 0.5), int(w * 0.72)):
+        y = int(h * 0.11)
+        r = max(7, w // 95)
+        draw.ellipse((x - r, y - r, x + r, y + r), fill=accent + (150,))
+        draw.ellipse((x - r * 3, y - r, x + r * 3, y + r * 5), fill=accent + (24,))
+    draw.line((int(w * 0.08), int(h * 0.08), int(w * 0.92), int(h * 0.08)), fill=(255, 255, 255, 30), width=max(1, lw // 2))
+
+
+def draw_rug(draw: ImageDraw.ImageDraw, w: int, h: int, accent: tuple[int, int, int], lw: int) -> None:
+    y0 = int(h * 0.74)
+    y1 = int(h * 0.94)
+    draw.ellipse((int(w * 0.22), y0, int(w * 0.78), y1), fill=accent + (70,), outline=accent + (125,), width=lw)
+    draw.ellipse((int(w * 0.29), y0 + int(h * 0.035), int(w * 0.71), y1 - int(h * 0.025)), outline=(255, 255, 255, 44), width=max(1, lw // 2))
+
+
+def draw_living_room(
+    draw: ImageDraw.ImageDraw,
+    w: int,
+    h: int,
+    horizon: int,
+    textile: tuple[int, int, int],
+    accent: tuple[int, int, int],
+    lw: int,
+) -> None:
+    draw_rug(draw, w, h, accent, lw)
+    sofa = (int(w * 0.22), int(h * 0.58), int(w * 0.78), int(h * 0.77))
+    draw.rounded_rectangle(sofa, radius=max(18, w // 38), fill=textile + (220,), outline=accent + (140,), width=lw)
+    for x in (int(w * 0.39), int(w * 0.57)):
+        draw.line((x, sofa[1] + int(h * 0.025), x, sofa[3] - int(h * 0.02)), fill=(255, 255, 255, 50), width=lw)
+    back = (sofa[0] + int(w * 0.025), sofa[1] - int(h * 0.06), sofa[2] - int(w * 0.025), sofa[1] + int(h * 0.055))
+    draw.rounded_rectangle(back, radius=max(14, w // 45), fill=lighten(textile, 22) + (205,), outline=accent + (100,), width=lw)
+    table = (int(w * 0.39), int(h * 0.76), int(w * 0.61), int(h * 0.86))
+    draw.ellipse(table, fill=(238, 235, 225, 190), outline=accent + (150,), width=lw)
+    for x in (int(w * 0.17), int(w * 0.83)):
+        draw.rounded_rectangle((x - int(w * 0.07), int(h * 0.64), x + int(w * 0.07), int(h * 0.78)), radius=max(16, w // 45), fill=accent + (132,), outline=(255, 255, 255, 70), width=lw)
+
+
+def draw_bedroom(
+    draw: ImageDraw.ImageDraw,
+    w: int,
+    h: int,
+    horizon: int,
+    textile: tuple[int, int, int],
+    accent: tuple[int, int, int],
+    lw: int,
+) -> None:
+    draw_rug(draw, w, h, accent, lw)
+    head = (int(w * 0.22), int(h * 0.48), int(w * 0.78), int(h * 0.66))
+    bed = (int(w * 0.18), int(h * 0.61), int(w * 0.82), int(h * 0.92))
+    draw.rounded_rectangle(head, radius=max(14, w // 48), fill=textile + (185,), outline=accent + (128,), width=lw)
+    draw.rounded_rectangle(bed, radius=max(18, w // 42), fill=lighten(textile, 38) + (220,), outline=accent + (125,), width=lw)
+    draw.rectangle((bed[0] + int(w * 0.03), bed[1] + int(h * 0.08), bed[2] - int(w * 0.03), bed[3] - int(h * 0.04)), fill=(255, 255, 255, 42))
+    for x0 in (int(w * 0.27), int(w * 0.52)):
+        draw.rounded_rectangle((x0, int(h * 0.56), x0 + int(w * 0.2), int(h * 0.66)), radius=max(10, w // 70), fill=(245, 241, 232, 205), outline=accent + (90,), width=lw)
+    for x in (int(w * 0.12), int(w * 0.88)):
+        draw.rounded_rectangle((x - int(w * 0.08), int(h * 0.66), x + int(w * 0.08), int(h * 0.82)), radius=max(8, w // 75), fill=accent + (115,), outline=(255, 255, 255, 50), width=lw)
+
+
+def draw_kitchen(
+    draw: ImageDraw.ImageDraw,
+    w: int,
+    h: int,
+    horizon: int,
+    wall: tuple[int, int, int],
+    floor: tuple[int, int, int],
+    textile: tuple[int, int, int],
+    accent: tuple[int, int, int],
+    lw: int,
+) -> None:
+    cabinet_y0, cabinet_y1 = int(h * 0.47), int(h * 0.73)
+    draw.rounded_rectangle((int(w * 0.08), cabinet_y0, int(w * 0.92), cabinet_y1), radius=max(8, w // 85), fill=textile + (150,), outline=accent + (120,), width=lw)
+    for x in range(int(w * 0.14), int(w * 0.88), max(80, w // 8)):
+        draw.line((x, cabinet_y0, x, cabinet_y1), fill=(255, 255, 255, 48), width=max(1, lw // 2))
+    top = int(h * 0.45)
+    draw.rectangle((int(w * 0.07), top, int(w * 0.93), top + int(h * 0.035)), fill=(240, 238, 231, 185))
+    island = (int(w * 0.31), int(h * 0.69), int(w * 0.69), int(h * 0.91))
+    draw.rounded_rectangle(island, radius=max(12, w // 70), fill=lighten(floor, 35) + (200,), outline=accent + (145,), width=lw)
+    draw.rectangle((island[0] - int(w * 0.02), island[1] - int(h * 0.025), island[2] + int(w * 0.02), island[1] + int(h * 0.02)), fill=(246, 244, 238, 210))
+    for x in (int(w * 0.38), int(w * 0.5), int(w * 0.62)):
+        draw.line((x, int(h * 0.16), x, int(h * 0.34)), fill=accent + (130,), width=lw)
+        draw.ellipse((x - int(w * 0.025), int(h * 0.34), x + int(w * 0.025), int(h * 0.39)), fill=accent + (135,))
+
+
+def draw_bathroom(
+    draw: ImageDraw.ImageDraw,
+    w: int,
+    h: int,
+    horizon: int,
+    wall: tuple[int, int, int],
+    floor: tuple[int, int, int],
+    textile: tuple[int, int, int],
+    accent: tuple[int, int, int],
+    lw: int,
+) -> None:
+    tile = max(56, w // 11)
+    for x in range(0, w, tile):
+        draw.line((x, int(h * 0.18), x, h), fill=(255, 255, 255, 28), width=max(1, lw // 2))
+    for y in range(int(h * 0.18), h, max(56, h // 10)):
+        draw.line((0, y, w, y), fill=(255, 255, 255, 24), width=max(1, lw // 2))
+    mirror = (int(w * 0.35), int(h * 0.22), int(w * 0.65), int(h * 0.49))
+    draw.rounded_rectangle(mirror, radius=max(12, w // 70), fill=(222, 238, 240, 85), outline=accent + (145,), width=lw)
+    vanity = (int(w * 0.28), int(h * 0.55), int(w * 0.72), int(h * 0.78))
+    draw.rounded_rectangle(vanity, radius=max(10, w // 80), fill=textile + (172,), outline=accent + (130,), width=lw)
+    draw.ellipse((int(w * 0.42), int(h * 0.51), int(w * 0.58), int(h * 0.60)), fill=(246, 246, 241, 205), outline=accent + (125,), width=lw)
+    tub = (int(w * 0.12), int(h * 0.73), int(w * 0.88), int(h * 0.94))
+    draw.rounded_rectangle(tub, radius=max(20, w // 36), fill=(241, 242, 237, 205), outline=accent + (135,), width=lw)
+
+
+def draw_office(
+    draw: ImageDraw.ImageDraw,
+    w: int,
+    h: int,
+    horizon: int,
+    textile: tuple[int, int, int],
+    accent: tuple[int, int, int],
+    lw: int,
+) -> None:
+    draw_rug(draw, w, h, accent, lw)
+    desk = (int(w * 0.2), int(h * 0.62), int(w * 0.8), int(h * 0.71))
+    draw.rounded_rectangle(desk, radius=max(8, w // 85), fill=accent + (190,), outline=(255, 255, 255, 72), width=lw)
+    for x in (int(w * 0.27), int(w * 0.73)):
+        draw.line((x, desk[3], x - int(w * 0.04), int(h * 0.9)), fill=textile + (185,), width=lw * 2)
+    chair = (int(w * 0.42), int(h * 0.68), int(w * 0.58), int(h * 0.88))
+    draw.rounded_rectangle(chair, radius=max(16, w // 50), fill=textile + (205,), outline=accent + (128,), width=lw)
+    draw.rounded_rectangle((int(w * 0.66), int(h * 0.38), int(w * 0.89), int(h * 0.59)), radius=max(8, w // 90), fill=(0, 0, 0, 96), outline=accent + (120,), width=lw)
+    for y in (int(h * 0.26), int(h * 0.34), int(h * 0.42)):
+        draw.line((int(w * 0.1), y, int(w * 0.34), y), fill=accent + (155,), width=lw * 2)
+
+
+def draw_hall(
+    draw: ImageDraw.ImageDraw,
+    w: int,
+    h: int,
+    horizon: int,
+    textile: tuple[int, int, int],
+    accent: tuple[int, int, int],
+    lw: int,
+) -> None:
+    runner = (int(w * 0.35), int(h * 0.58), int(w * 0.65), h)
+    draw.polygon([(runner[0], h), (runner[2], h), (int(w * 0.56), int(h * 0.58)), (int(w * 0.44), int(h * 0.58))], fill=accent + (80,), outline=accent + (140,))
+    console = (int(w * 0.18), int(h * 0.55), int(w * 0.82), int(h * 0.68))
+    draw.rounded_rectangle(console, radius=max(8, w // 85), fill=textile + (170,), outline=accent + (125,), width=lw)
+    for x in (int(w * 0.27), int(w * 0.73)):
+        draw.line((x, console[3], x, int(h * 0.88)), fill=textile + (160,), width=lw * 2)
+    mirror = (int(w * 0.39), int(h * 0.22), int(w * 0.61), int(h * 0.48))
+    draw.rounded_rectangle(mirror, radius=max(12, w // 65), fill=(230, 236, 236, 70), outline=accent + (140,), width=lw)
+    for x in (int(w * 0.14), int(w * 0.86)):
+        draw.line((x, int(h * 0.2), x, int(h * 0.83)), fill=(255, 255, 255, 28), width=lw)
+
+
+def draw_requirements_badges(
+    draw: ImageDraw.ImageDraw,
+    w: int,
+    h: int,
+    requirements: dict[str, Any],
+    accent: tuple[int, int, int],
+    lw: int,
+) -> None:
+    palette = requirements.get("palette") if isinstance(requirements, dict) else None
+    if not isinstance(palette, list) or not palette:
+        return
+    x = int(w * 0.04)
+    y = int(h * 0.91)
+    sw = max(28, w // 36)
+    for i, _name in enumerate(palette[:5]):
+        color = lighten(accent, min(45, i * 10))
+        draw.rounded_rectangle((x + i * int(sw * 1.25), y, x + i * int(sw * 1.25) + sw, y + sw), radius=sw // 2, fill=color + (170,), outline=(255, 255, 255, 70), width=max(1, lw // 2))
+
+
+def summarize_requirements(requirements: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(requirements, dict):
+        return {}
+    notes = str(requirements.get("notes") or "").strip()
+    return {
+        "notes": notes[:400],
+        "palette": requirements.get("palette") if isinstance(requirements.get("palette"), list) else [],
+        "budget_level": requirements.get("budget_level"),
+    }
+
+
 def resize_cover(image: Image.Image, size: tuple[int, int]) -> Image.Image:
     return ImageOps.fit(image, size, method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
 
@@ -309,30 +639,42 @@ def make_panorama(source: Image.Image, style: str, room_type: str) -> tuple[Imag
     src = apply_style_tint(src, style)
 
     pano_w, pano_h = 4096, 2048
-    center_w, center_h = 1760, 1220
+    center_w, center_h = 2048, 1180
     center = resize_cover(src, (center_w, center_h))
 
-    blur_base = resize_cover(src, (pano_w, pano_h)).filter(ImageFilter.GaussianBlur(32))
-    mirrored = ImageOps.mirror(resize_cover(src, (pano_w, pano_h))).filter(ImageFilter.GaussianBlur(18))
-    pano = Image.blend(blur_base, mirrored, 0.28)
+    palette = style_palette(style)
+    wall = palette["wall"]
+    floor = palette["floor"]
+    accent = palette["accent"]
+    pano = gradient((pano_w, pano_h), lighten(wall, 22), darken(floor, 38))
+    draw_bg = ImageDraw.Draw(pano, "RGBA")
+    horizon = 1060
+    draw_bg.rectangle((0, horizon, pano_w, pano_h), fill=floor + (180,))
+    draw_bg.line((0, horizon, pano_w, horizon), fill=accent + (140,), width=5)
+    for x in range(-pano_w // 4, pano_w + pano_w // 4, 320):
+        draw_bg.line((pano_w // 2, horizon, x, pano_h), fill=(255, 255, 255, 28), width=2)
+    for y in range(horizon + 150, pano_h, 170):
+        draw_bg.line((0, y, pano_w, y), fill=(255, 255, 255, 18), width=2)
 
-    top_color = tuple(np.asarray(src.resize((1, 1), Image.Resampling.BICUBIC)).reshape(3).astype(int))
-    top = gradient((pano_w, 420), lighten(top_color, 30), darken(top_color, 12)).filter(ImageFilter.GaussianBlur(4))
-    bottom = gradient((pano_w, 440), darken(top_color, 42), darken(top_color, 70)).filter(ImageFilter.GaussianBlur(4))
-    pano.paste(top, (0, 0))
-    pano.paste(bottom, (0, pano_h - bottom.height))
+    side = resize_cover(src, (900, 760)).filter(ImageFilter.UnsharpMask(radius=1, percent=80, threshold=4))
+    side = ImageEnhance.Brightness(side).enhance(0.82)
+    for x, mirrored in ((360, True), (pano_w - 1260, False)):
+        panel = ImageOps.mirror(side) if mirrored else side
+        mask = Image.new("L", panel.size, 0)
+        ImageDraw.Draw(mask).rounded_rectangle((0, 0, panel.width, panel.height), radius=32, fill=155)
+        pano.paste(panel, (x, 505), mask.filter(ImageFilter.GaussianBlur(2)))
 
     x0 = (pano_w - center_w) // 2
-    y0 = 430
+    y0 = 420
     mask = Image.new("L", (center_w, center_h), 0)
     draw_mask = ImageDraw.Draw(mask)
-    draw_mask.rounded_rectangle((0, 0, center_w, center_h), radius=42, fill=255)
-    soft_mask = mask.filter(ImageFilter.GaussianBlur(5))
+    draw_mask.rounded_rectangle((0, 0, center_w, center_h), radius=30, fill=255)
+    soft_mask = mask.filter(ImageFilter.GaussianBlur(1))
 
     shadow = Image.new("RGBA", (center_w + 120, center_h + 120), (0, 0, 0, 0))
     shadow_mask = Image.new("L", (center_w + 120, center_h + 120), 0)
-    ImageDraw.Draw(shadow_mask).rounded_rectangle((60, 60, center_w + 60, center_h + 60), radius=52, fill=138)
-    shadow.putalpha(shadow_mask.filter(ImageFilter.GaussianBlur(35)))
+    ImageDraw.Draw(shadow_mask).rounded_rectangle((60, 60, center_w + 60, center_h + 60), radius=40, fill=108)
+    shadow.putalpha(shadow_mask.filter(ImageFilter.GaussianBlur(22)))
     pano_rgba = pano.convert("RGBA")
     pano_rgba.alpha_composite(shadow, (x0 - 60, y0 - 60))
     pano_rgba.paste(center.convert("RGBA"), (x0, y0), soft_mask)
@@ -418,6 +760,8 @@ def make_report(tour: sqlite3.Row) -> Path:
 <body>
   <h1>{escape_html(tour['title'])}</h1>
   <p>{escape_html(room_label(tour['room_type']))} / {escape_html(style_label(tour['style']))}</p>
+  <img src="../tours/{tour['id']}/redesign.jpg" alt="Generated redesign">
+  <h2>360 Walkthrough Panorama</h2>
   <img src="../tours/{tour['id']}/panorama.jpg" alt="Generated panorama">
   <h2>Requirements</h2>
   <pre>{escape_html(json.dumps(requirements, indent=2))}</pre>
@@ -464,6 +808,7 @@ def tour_to_json(row: sqlite3.Row, request: Request | None = None) -> dict[str, 
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
         "source_url": public_path(Path(row["source_path"])),
+        "redesign_url": public_path(Path(row["redesign_path"] or row["thumb_path"])),
         "pano_url": public_path(Path(row["pano_path"])),
         "thumb_url": public_path(Path(row["thumb_path"])),
     }
@@ -559,6 +904,21 @@ def patch_me(payload: ProfilePatch, user: sqlite3.Row = Depends(current_user)) -
     return {"user": row_to_user(updated)}
 
 
+@app.patch("/api/me/password")
+def patch_password(payload: PasswordPatch, user: sqlite3.Row = Depends(current_user)) -> dict[str, bool]:
+    if not verify_password(payload.currentPassword, user["salt"], user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Current password is incorrect.")
+    if len(payload.newPassword) < 4:
+        raise HTTPException(status_code=400, detail="New password must be at least 4 characters.")
+    salt = secrets.token_hex(16)
+    with db() as conn:
+        conn.execute(
+            "UPDATE users SET password_hash = ?, salt = ? WHERE id = ?",
+            (hash_password(payload.newPassword, salt), salt, user["id"]),
+        )
+    return {"ok": True}
+
+
 @app.post("/api/upload")
 async def upload(file: UploadFile = File(...), user: sqlite3.Row = Depends(current_user)) -> dict[str, Any]:
     content_type = (file.content_type or "").lower()
@@ -629,11 +989,19 @@ def create_tour(payload: TourCreatePayload, user: sqlite3.Row = Depends(current_
     tour_dir.mkdir(parents=True, exist_ok=True)
     source_path = Path(upload["path"])
     source = Image.open(source_path)
-    pano, metadata = make_panorama(source, style=style, room_type=room_type)
+    redesign, redesign_metadata = make_redesign(
+        source,
+        style=style,
+        room_type=room_type,
+        requirements=payload.requirements,
+    )
+    pano, metadata = make_panorama(redesign, style=style, room_type=room_type)
+    redesign_path = tour_dir / "redesign.jpg"
     pano_path = tour_dir / "panorama.jpg"
     thumb_path = tour_dir / "thumbnail.jpg"
+    redesign.save(redesign_path, "JPEG", quality=94, optimize=True, progressive=True)
     pano.save(pano_path, "JPEG", quality=91, optimize=True)
-    make_thumb(pano).save(thumb_path, "JPEG", quality=88, optimize=True)
+    make_thumb(redesign).save(thumb_path, "JPEG", quality=90, optimize=True)
 
     title = f"{style_label(style)} {room_label(room_type)}"
     now = utc_now()
@@ -643,6 +1011,7 @@ def create_tour(payload: TourCreatePayload, user: sqlite3.Row = Depends(current_
             "style": style,
             "source_width": upload["width"],
             "source_height": upload["height"],
+            "redesign": redesign_metadata,
             "created_at": now,
         }
     )
@@ -652,8 +1021,8 @@ def create_tour(payload: TourCreatePayload, user: sqlite3.Row = Depends(current_
             """
             INSERT INTO tours
               (id, user_id, upload_id, title, room_type, style, requirements_json, metadata_json,
-               pano_path, thumb_path, source_path, saved, favorite, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?)
+               redesign_path, pano_path, thumb_path, source_path, saved, favorite, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?)
             """,
             (
                 tour_id,
@@ -664,6 +1033,7 @@ def create_tour(payload: TourCreatePayload, user: sqlite3.Row = Depends(current_
                 style,
                 safe_json(payload.requirements),
                 safe_json(metadata),
+                str(redesign_path),
                 str(pano_path),
                 str(thumb_path),
                 str(source_path),
@@ -725,7 +1095,11 @@ def export_tour(
     user = user_from_token(raw_token)
     row = find_tour(tour_id, user["id"])
     if kind in {"pano", "image", "hd"}:
+        if kind in {"image", "hd"} and row["redesign_path"]:
+            return FileResponse(Path(row["redesign_path"]), filename=f"{row['title']}-redesign.jpg", media_type="image/jpeg")
         return FileResponse(Path(row["pano_path"]), filename=f"{row['title']}-panorama.jpg", media_type="image/jpeg")
+    if kind in {"redesign", "render"}:
+        return FileResponse(Path(row["redesign_path"] or row["thumb_path"]), filename=f"{row['title']}-redesign.jpg", media_type="image/jpeg")
     if kind in {"thumb", "thumbnail"}:
         return FileResponse(Path(row["thumb_path"]), filename=f"{row['title']}-thumbnail.jpg", media_type="image/jpeg")
     if kind in {"report", "pdf"}:
