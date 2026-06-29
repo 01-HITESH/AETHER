@@ -117,6 +117,11 @@
         json: { currentPassword: currentPassword, newPassword: newPassword },
       });
     },
+    uploadProfileImage: function (file) {
+      var fd = new FormData();
+      fd.append("file", file);
+      return this.request("/me/profile-image", { method: "POST", body: fd });
+    },
 
     upload: function (file) {
       var fd = new FormData();
@@ -177,6 +182,26 @@
     }, kind === "error" ? 4200 : 2600);
   }
   window.aetherToast = toast;
+
+  function ensureThemeStyles() {
+    if ($("#aether-theme-style")) return;
+    var style = document.createElement("style");
+    style.id = "aether-theme-style";
+    style.textContent =
+      "body.aether-light{background:#f7f5ef!important;color:#202124!important;}" +
+      "body.aether-light .glass-panel,body.aether-light .glass-card{background:rgba(255,255,255,.78)!important;border-color:rgba(32,33,36,.12)!important;box-shadow:0 10px 30px rgba(32,33,36,.08)!important;}" +
+      "body.aether-light nav,body.aether-light header{background:rgba(250,248,242,.88)!important;border-color:rgba(32,33,36,.1)!important;box-shadow:none!important;}" +
+      "body.aether-light .bg-background,body.aether-light .bg-surface,body.aether-light .bg-surface-container-lowest,body.aether-light .bg-surface-container-low,body.aether-light .bg-surface-container,body.aether-light .bg-surface-container-high,body.aether-light .bg-surface-container-highest,body.aether-light .bg-primary-container{background-color:#f7f5ef!important;}" +
+      "body.aether-light .text-on-surface,body.aether-light .text-on-background,body.aether-light .text-primary{color:#202124!important;}" +
+      "body.aether-light .text-on-surface-variant{color:#60646b!important;}" +
+      "body.aether-light .text-secondary{color:#7c6336!important;}" +
+      "body.aether-light .bg-secondary{background-color:#8a7142!important;}" +
+      "body.aether-light .text-surface,body.aether-light .text-on-secondary{color:#fffaf0!important;}" +
+      "body.aether-light input,body.aether-light textarea,body.aether-light select{background-color:#fffaf0!important;color:#202124!important;border-color:rgba(32,33,36,.14)!important;}" +
+      "body.aether-light ::-webkit-scrollbar-track{background:#f7f5ef!important;}" +
+      "body.aether-light ::-webkit-scrollbar-thumb{background:rgba(32,33,36,.2)!important;}";
+    document.head.appendChild(style);
+  }
 
   // ===========================================================================
   // Session guard
@@ -661,17 +686,23 @@
   Pages.aether_profile_settings = function () {
     var currentUser = null;
     AetherAPI.me().then(function (res) {
-      var u = res.user, s = res.stats;
+      var u = res.user, s = res.stats || {};
       currentUser = u;
       AetherAPI.setUser(u);
       syncProfileIdentity(u);
+      bindThemeToggle(u);
       syncDashboardStats(s || {});
       $all("[data-aether-username]").forEach(function (el) { el.textContent = u.name; });
       $all("[data-aether-email]").forEach(function (el) { el.textContent = u.email; });
-      $all("[data-aether-stat-projects]").forEach(function (el) { el.textContent = s.projects; });
-      $all("[data-aether-stat-saved]").forEach(function (el) { el.textContent = s.saved; });
+      $all("[data-aether-username-input]").forEach(function (el) { el.value = u.name || ""; });
+      $all("[data-aether-email-input]").forEach(function (el) { el.value = u.email || ""; });
+      $all("[data-aether-stat-projects]").forEach(function (el) { el.textContent = s.projects || 0; });
+      $all("[data-aether-stat-saved]").forEach(function (el) { el.textContent = s.saved || 0; });
       applyProfileSettings(u.settings || {});
-    }).catch(function () {});
+      syncProfileAvatar(u);
+      renderUserHistory(res.history || []);
+    }).catch(function () { bindThemeToggle(AetherAPI.getUser()); });
+    wireProfileImageUpload(function (u) { currentUser = u; });
     var save = findButtonByText(/save changes/i);
     if (save) {
       save.dataset.aetherHandled = "1";
@@ -681,12 +712,17 @@
         $all("input[type='checkbox']").forEach(function (input, i) { settings["toggle_" + (i + 1)] = input.checked; });
         var range = $("input[type='range']");
         if (range) settings.design_intensity = Number(range.value);
-        var patch = { settings: settings };
-        if (currentUser && currentUser.name) patch.name = currentUser.name;
+        settings.theme = currentTheme();
+        var nameInput = $("[data-aether-username-input]");
+        var username = nameInput ? nameInput.value.trim() : ((currentUser && currentUser.name) || "");
+        if (!username) { toast("Username cannot be empty.", "error"); return; }
+        var patch = { username: username, settings: settings };
         AetherAPI.patchMe(patch).then(function (res) {
           currentUser = res.user;
           AetherAPI.setUser(res.user);
           syncProfileIdentity(res.user);
+          syncProfileAvatar(res.user);
+          bindThemeToggle(res.user);
           toast("Profile settings saved.");
         }).catch(function (err) { toast(err.message || "Could not save settings.", "error"); });
       });
@@ -697,6 +733,7 @@
       cancel.addEventListener("click", function (e) { e.preventDefault(); location.href = page("aether_dashboard"); });
     }
     wireProfileAccountActions(function () { return currentUser; }, function (u) { currentUser = u; });
+    bindThemeToggle(AetherAPI.getUser());
   };
 
   // The 3D viewer pages are handled by pano-viewer.js; nothing extra needed here,
@@ -726,6 +763,45 @@
     for (var i = 0; i < els.length; i++) if (re.test(textOf(els[i]))) return els[i];
     return null;
   }
+  function currentTheme() {
+    var user = AetherAPI.getUser();
+    return (user.settings && user.settings.theme) || localStorage.getItem("aether_theme") || "dark";
+  }
+  function applyTheme(theme) {
+    theme = theme === "light" ? "light" : "dark";
+    localStorage.setItem("aether_theme", theme);
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    document.documentElement.dataset.aetherTheme = theme;
+    document.body && document.body.classList.toggle("aether-light", theme === "light");
+    updateThemeButtons(theme);
+  }
+  function updateThemeButtons(theme) {
+    $all("[data-aether-theme-toggle]").forEach(function (btn) {
+      var icon = btn.querySelector(".material-symbols-outlined");
+      if (icon) icon.textContent = theme === "light" ? "light_mode" : "dark_mode";
+      btn.setAttribute("aria-label", theme === "light" ? "Switch to dark mode" : "Switch to light mode");
+      btn.setAttribute("title", theme === "light" ? "Switch to dark mode" : "Switch to light mode");
+    });
+  }
+  function bindThemeToggle(user) {
+    var settings = (user && user.settings) || {};
+    applyTheme(settings.theme || currentTheme());
+    $all("[data-aether-theme-toggle]").forEach(function (btn) {
+      if (btn.dataset.aetherThemeBound) return;
+      btn.dataset.aetherThemeBound = "1";
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        var next = currentTheme() === "light" ? "dark" : "light";
+        applyTheme(next);
+        AetherAPI.patchMe({ settings: { theme: next } }).then(function (res) {
+          AetherAPI.setUser(res.user);
+          toast((next === "light" ? "Light" : "Dark") + " mode enabled.");
+        }).catch(function (err) {
+          toast(err.message || "Could not save theme.", "error");
+        });
+      });
+    });
+  }
   function wireBack() {
     var back = findButtonByText(/^back$/i);
     if (back) {
@@ -743,6 +819,107 @@
     if (range && settings.design_intensity !== undefined) range.value = settings.design_intensity;
   }
 
+  function wireProfileImageUpload(setUser) {
+    var input = $("[data-aether-avatar-input]");
+    if (!input) return;
+    $all("[data-aether-avatar-button]").forEach(function (btn) {
+      btn.dataset.aetherHandled = "1";
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        input.click();
+      });
+    });
+    input.addEventListener("change", function () {
+      var file = input.files && input.files[0];
+      if (!file) return;
+      if (!/image\/(png|jpe?g|webp)/i.test(file.type)) {
+        toast("Please choose a JPG, PNG, or WebP profile image.", "error");
+        input.value = "";
+        return;
+      }
+      if (file.size > 25 * 1024 * 1024) {
+        toast("Profile image exceeds the 25MB limit.", "error");
+        input.value = "";
+        return;
+      }
+      var previewUrl = URL.createObjectURL(file);
+      $all("[data-aether-avatar]").forEach(function (img) { setImage(img, previewUrl); });
+      toast("Uploading profile picture...");
+      AetherAPI.uploadProfileImage(file).then(function (res) {
+        setUser(res.user);
+        AetherAPI.setUser(res.user);
+        syncProfileIdentity(res.user);
+        syncProfileAvatar(res.user);
+        toast("Profile picture uploaded at original quality.");
+      }).catch(function (err) {
+        toast(err.message || "Could not upload profile picture.", "error");
+      }).finally(function () {
+        input.value = "";
+        setTimeout(function () { URL.revokeObjectURL(previewUrl); }, 5000);
+      });
+    });
+  }
+
+  function syncProfileAvatar(user) {
+    if (!user) return;
+    var image = user.profile_image || {};
+    var url = user.profile_image_url || image.url || "";
+    if (url) {
+      var cacheBust = (url.indexOf("?") >= 0 ? "&" : "?") + "v=" + encodeURIComponent(user.updated_at || Date.now());
+      $all("[data-aether-avatar], img").forEach(function (img) {
+        var context = ((img.getAttribute("alt") || "") + " " + (img.getAttribute("data-alt") || "") + " " + contextText(img)).toLowerCase();
+        if (img.hasAttribute("data-aether-avatar") || /account|profile|architect profile|avatar|user avatar|alexander thorne/.test(context)) {
+          setImage(img, url + cacheBust);
+        }
+      });
+    }
+    var meta = $("[data-aether-avatar-meta]");
+    if (meta && image.width && image.height) {
+      meta.textContent = image.width + " x " + image.height + " original " + ((image.content_type || "image").replace("image/", "").toUpperCase());
+    }
+  }
+
+  function renderUserHistory(history) {
+    var host = $("[data-aether-history]");
+    if (!host) return;
+    while (host.firstChild) host.removeChild(host.firstChild);
+    if (!history || !history.length) {
+      var empty = document.createElement("p");
+      empty.className = "font-body-md text-body-md text-on-surface-variant";
+      empty.textContent = "No account activity yet.";
+      host.appendChild(empty);
+      return;
+    }
+    history.slice(0, 8).forEach(function (item) {
+      var row = document.createElement("div");
+      row.className = "flex gap-3 pb-4 border-b border-white/5 last:border-b-0 last:pb-0";
+      var icon = document.createElement("span");
+      icon.className = "material-symbols-outlined text-secondary text-[20px] mt-0.5";
+      icon.textContent = historyIcon(item.type);
+      var body = document.createElement("div");
+      var summary = document.createElement("p");
+      summary.className = "font-body-md text-body-md text-on-surface";
+      summary.textContent = item.summary || "Account activity";
+      var when = document.createElement("p");
+      when.className = "font-label-sm text-label-sm text-on-surface-variant mt-1";
+      when.textContent = formatDateTime(item.created_at);
+      body.appendChild(summary);
+      body.appendChild(when);
+      row.appendChild(icon);
+      row.appendChild(body);
+      host.appendChild(row);
+    });
+  }
+
+  function historyIcon(type) {
+    if (/password|security/.test(type || "")) return "lock";
+    if (/image|profile/.test(type || "")) return "person";
+    if (/upload/.test(type || "")) return "cloud_upload";
+    if (/tour|design/.test(type || "")) return "view_in_ar";
+    if (/sign/.test(type || "")) return "login";
+    return "history";
+  }
+
   function wireProfileAccountActions(getUser, setUser) {
     $all("button").forEach(function (btn) {
       var t = actionText(btn).toLowerCase();
@@ -755,7 +932,7 @@
           if (name === null) return;
           name = name.trim();
           if (!name) { toast("Profile name cannot be empty.", "error"); return; }
-          AetherAPI.patchMe({ name: name }).then(function (res) {
+          AetherAPI.patchMe({ username: name }).then(function (res) {
             setUser(res.user);
             AetherAPI.setUser(res.user);
             syncProfileIdentity(res.user);
@@ -917,7 +1094,12 @@
 
   function syncProfileIdentity(user) {
     if (!user) return;
+    $all("[data-aether-username]").forEach(function (el) { el.textContent = user.name || "Designer"; });
+    $all("[data-aether-email]").forEach(function (el) { el.textContent = user.email || ""; });
+    $all("[data-aether-username-input]").forEach(function (el) { el.value = user.name || ""; });
+    $all("[data-aether-email-input]").forEach(function (el) { el.value = user.email || ""; });
     $all("h1,h2,h3,h4,p,span").forEach(function (el) {
+      if (el.hasAttribute("data-aether-username") || el.hasAttribute("data-aether-email")) return;
       var t = textOf(el);
       if (/alexander thorne|alex thorne|designer$/i.test(t) && user.name) {
         el.textContent = user.name;
@@ -933,6 +1115,12 @@
     var d = new Date(value);
     if (isNaN(d.getTime())) return value;
     return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  }
+
+  function formatDateTime(value) {
+    var d = new Date(value);
+    if (isNaN(d.getTime())) return value || "";
+    return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   }
 
   function setMetric(label, value) {
@@ -1109,10 +1297,16 @@
   // Boot
   // ===========================================================================
   function boot() {
+    ensureThemeStyles();
+    applyTheme(currentTheme());
     guard();
     // Restore aetherSession on every page load so inline mockup guards pass
     // even in new tabs where only the localStorage token survived.
-    if (AetherAPI.isAuthed()) syncSession(AetherAPI.getUser());
+    if (AetherAPI.isAuthed()) {
+      var cachedUser = AetherAPI.getUser();
+      syncSession(cachedUser);
+      syncProfileAvatar(cachedUser);
+    }
     wireGlobalNav();
     var mod = Pages[PAGE];
     if (mod) { try { mod(); } catch (e) { console.error("[AETHER] page module error:", e); } }

@@ -28,13 +28,16 @@ FRONTEND_DIR = ROOT / "FRONTEND"
 DATA_DIR = ROOT / "BACKEND" / "data"
 DATABASE_DIR = DATA_DIR / "database"
 UPLOADS_DIR = DATA_DIR / "uploads"
+PROFILE_IMAGES_DIR = DATA_DIR / "profile_images"
 TOURS_DIR = DATA_DIR / "tours"
 EXPORTS_DIR = DATA_DIR / "exports"
 LEGACY_DB_PATH = DATA_DIR / "aether.sqlite3"
 DB_PATH = DATABASE_DIR / "aether.sqlite3"
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
+MAX_PROFILE_IMAGE_BYTES = 25 * 1024 * 1024
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/jpg"}
+ALLOWED_PROFILE_IMAGE_TYPES = {"image/jpeg", "image/png", "image/jpg", "image/webp"}
 
 ROOM_LABELS = {
     "living_room": "Living Room",
@@ -96,6 +99,7 @@ class RegisterPayload(LoginPayload):
 
 class ProfilePatch(BaseModel):
     name: str | None = None
+    username: str | None = None
     settings: dict[str, Any] | None = None
 
 
@@ -119,7 +123,7 @@ def utc_now() -> str:
 
 
 def ensure_dirs() -> None:
-    for path in (DATA_DIR, DATABASE_DIR, UPLOADS_DIR, TOURS_DIR, EXPORTS_DIR):
+    for path in (DATA_DIR, DATABASE_DIR, UPLOADS_DIR, PROFILE_IMAGES_DIR, TOURS_DIR, EXPORTS_DIR):
         path.mkdir(parents=True, exist_ok=True)
     if LEGACY_DB_PATH.exists() and not DB_PATH.exists():
         src = sqlite3.connect(LEGACY_DB_PATH)
@@ -135,6 +139,8 @@ def db() -> sqlite3.Connection:
     ensure_dirs()
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA busy_timeout = 5000")
     return conn
 
 
@@ -152,7 +158,12 @@ def init_db() -> None:
                 password_hash TEXT NOT NULL,
                 salt TEXT NOT NULL,
                 settings_json TEXT NOT NULL DEFAULT '{}',
-                created_at TEXT NOT NULL
+                profile_image_path TEXT NOT NULL DEFAULT '',
+                profile_image_content_type TEXT NOT NULL DEFAULT '',
+                profile_image_width INTEGER NOT NULL DEFAULT 0,
+                profile_image_height INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
             );
 
             CREATE TABLE IF NOT EXISTS sessions (
@@ -194,9 +205,31 @@ def init_db() -> None:
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
                 FOREIGN KEY(upload_id) REFERENCES uploads(id) ON DELETE CASCADE
             );
+
+            CREATE TABLE IF NOT EXISTS user_history (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                event_type TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                metadata_json TEXT NOT NULL DEFAULT '{}',
+                created_at TEXT NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
+            CREATE INDEX IF NOT EXISTS idx_uploads_user_created ON uploads(user_id, created_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_tours_user_created ON tours(user_id, created_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_tours_user_saved ON tours(user_id, saved, updated_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_user_history_user_created ON user_history(user_id, created_at DESC);
             """
         )
+        ensure_column(conn, "users", "profile_image_path", "TEXT NOT NULL DEFAULT ''")
+        ensure_column(conn, "users", "profile_image_content_type", "TEXT NOT NULL DEFAULT ''")
+        ensure_column(conn, "users", "profile_image_width", "INTEGER NOT NULL DEFAULT 0")
+        ensure_column(conn, "users", "profile_image_height", "INTEGER NOT NULL DEFAULT 0")
+        ensure_column(conn, "users", "updated_at", "TEXT NOT NULL DEFAULT ''")
         ensure_column(conn, "tours", "redesign_path", "TEXT NOT NULL DEFAULT ''")
+        conn.execute("UPDATE users SET updated_at = created_at WHERE updated_at = '' OR updated_at IS NULL")
 
 
 def ensure_column(conn: sqlite3.Connection, table: str, column: str, definition: str) -> None:
@@ -234,13 +267,61 @@ def public_path(path: Path) -> str:
 
 def row_to_user(row: sqlite3.Row) -> dict[str, Any]:
     settings = json.loads(row["settings_json"] or "{}")
+    profile_image_path = row["profile_image_path"] or ""
+    profile_image_url = public_path(Path(profile_image_path)) if profile_image_path else ""
     return {
         "id": row["id"],
         "email": row["email"],
         "name": row["name"],
+        "username": row["name"],
         "settings": settings,
+        "profile_image_url": profile_image_url,
+        "profile_image": {
+            "url": profile_image_url,
+            "content_type": row["profile_image_content_type"] or "",
+            "width": int(row["profile_image_width"] or 0),
+            "height": int(row["profile_image_height"] or 0),
+        },
+        "created_at": row["created_at"],
+        "updated_at": row["updated_at"] or row["created_at"],
+    }
+
+
+def row_to_history(row: sqlite3.Row) -> dict[str, Any]:
+    return {
+        "id": row["id"],
+        "type": row["event_type"],
+        "summary": row["summary"],
+        "metadata": json.loads(row["metadata_json"] or "{}"),
         "created_at": row["created_at"],
     }
+
+
+def log_user_history(
+    conn: sqlite3.Connection,
+    user_id: str,
+    event_type: str,
+    summary: str,
+    metadata: dict[str, Any] | None = None,
+) -> None:
+    conn.execute(
+        """
+        INSERT INTO user_history (id, user_id, event_type, summary, metadata_json, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (new_id("hist"), user_id, event_type, summary, safe_json(metadata or {}), utc_now()),
+    )
+
+
+def profile_image_ext(content_type: str, filename: str | None = None) -> str:
+    if content_type == "image/png":
+        return ".png"
+    if content_type == "image/webp":
+        return ".webp"
+    if content_type in {"image/jpeg", "image/jpg"}:
+        return ".jpg"
+    suffix = Path(filename or "").suffix.lower()
+    return suffix if suffix in {".jpg", ".jpeg", ".png", ".webp"} else ".img"
 
 
 def create_session(user_id: str) -> str:
@@ -250,6 +331,7 @@ def create_session(user_id: str) -> str:
             "INSERT INTO sessions (token_hash, user_id, created_at) VALUES (?, ?, ?)",
             (token_hash(raw), user_id, utc_now()),
         )
+        log_user_history(conn, user_id, "signed_in", "Signed in to AETHER.")
     return raw
 
 
@@ -832,17 +914,19 @@ def register(payload: RegisterPayload) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail="Password must be at least 4 characters.")
     user_id = new_id("usr")
     salt = secrets.token_hex(16)
+    now = utc_now()
     with db() as conn:
         existing = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
         if existing:
             raise HTTPException(status_code=409, detail="An account with this email already exists.")
         conn.execute(
             """
-            INSERT INTO users (id, email, name, password_hash, salt, settings_json, created_at)
-            VALUES (?, ?, ?, ?, ?, '{}', ?)
+            INSERT INTO users (id, email, name, password_hash, salt, settings_json, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, '{}', ?, ?)
             """,
-            (user_id, email, payload.name.strip() or "Designer", hash_password(password, salt), salt, utc_now()),
+            (user_id, email, payload.name.strip() or "Designer", hash_password(password, salt), salt, now, now),
         )
+        log_user_history(conn, user_id, "account_created", "Created AETHER account.", {"email": email})
         user = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
     token = create_session(user_id)
     return {"token": token, "user": row_to_user(user)}
@@ -863,6 +947,9 @@ def logout(authorization: str | None = Header(default=None)) -> dict[str, bool]:
     if authorization:
         token = bearer_token(authorization)
         with db() as conn:
+            row = conn.execute("SELECT user_id FROM sessions WHERE token_hash = ?", (token_hash(token),)).fetchone()
+            if row:
+                log_user_history(conn, row["user_id"], "signed_out", "Signed out of AETHER.")
             conn.execute("DELETE FROM sessions WHERE token_hash = ?", (token_hash(token),))
     return {"ok": True}
 
@@ -879,6 +966,15 @@ def me(user: sqlite3.Row = Depends(current_user)) -> dict[str, Any]:
             """,
             (user["id"],),
         ).fetchone()
+        history_rows = conn.execute(
+            """
+            SELECT * FROM user_history
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            LIMIT 20
+            """,
+            (user["id"],),
+        ).fetchall()
     return {
         "user": row_to_user(user),
         "stats": {
@@ -886,20 +982,27 @@ def me(user: sqlite3.Row = Depends(current_user)) -> dict[str, Any]:
             "saved": int(stats["saved"] or 0),
             "favorites": int(stats["favorites"] or 0),
         },
+        "history": [row_to_history(row) for row in history_rows],
     }
 
 
 @app.patch("/api/me")
 def patch_me(payload: ProfilePatch, user: sqlite3.Row = Depends(current_user)) -> dict[str, Any]:
-    name = (payload.name or user["name"]).strip() or user["name"]
+    submitted_name = payload.username if payload.username is not None else payload.name
+    name = (submitted_name or user["name"]).strip() or user["name"]
+    if len(name) > 80:
+        raise HTTPException(status_code=400, detail="Username must be 80 characters or fewer.")
     settings = json.loads(user["settings_json"] or "{}")
     if payload.settings:
         settings.update(payload.settings)
+    changed = name != user["name"] or safe_json(settings) != safe_json(json.loads(user["settings_json"] or "{}"))
     with db() as conn:
         conn.execute(
-            "UPDATE users SET name = ?, settings_json = ? WHERE id = ?",
-            (name, safe_json(settings), user["id"]),
+            "UPDATE users SET name = ?, settings_json = ?, updated_at = ? WHERE id = ?",
+            (name, safe_json(settings), utc_now(), user["id"]),
         )
+        if changed:
+            log_user_history(conn, user["id"], "profile_updated", "Updated account profile settings.")
         updated = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
     return {"user": row_to_user(updated)}
 
@@ -913,10 +1016,66 @@ def patch_password(payload: PasswordPatch, user: sqlite3.Row = Depends(current_u
     salt = secrets.token_hex(16)
     with db() as conn:
         conn.execute(
-            "UPDATE users SET password_hash = ?, salt = ? WHERE id = ?",
-            (hash_password(payload.newPassword, salt), salt, user["id"]),
+            "UPDATE users SET password_hash = ?, salt = ?, updated_at = ? WHERE id = ?",
+            (hash_password(payload.newPassword, salt), salt, utc_now(), user["id"]),
         )
+        log_user_history(conn, user["id"], "password_updated", "Changed account password.")
     return {"ok": True}
+
+
+@app.post("/api/me/profile-image")
+async def upload_profile_image(file: UploadFile = File(...), user: sqlite3.Row = Depends(current_user)) -> dict[str, Any]:
+    content_type = (file.content_type or "").lower()
+    if content_type not in ALLOWED_PROFILE_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Please upload a JPG, PNG, or WebP profile image.")
+    data = await file.read(MAX_PROFILE_IMAGE_BYTES + 1)
+    if len(data) > MAX_PROFILE_IMAGE_BYTES:
+        raise HTTPException(status_code=400, detail="Profile image exceeds the 25MB limit.")
+    try:
+        image = Image.open(io.BytesIO(data))
+        image.verify()
+        image = Image.open(io.BytesIO(data))
+        width, height = image.size
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="The profile image is not readable.") from exc
+
+    ext = profile_image_ext(content_type, file.filename)
+    target_dir = PROFILE_IMAGES_DIR / user["id"]
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target = target_dir / f"avatar{ext}"
+
+    old_path = user["profile_image_path"] or ""
+    if old_path:
+        old = Path(old_path)
+        try:
+            if old.resolve().is_relative_to(PROFILE_IMAGES_DIR.resolve()) and old != target and old.exists():
+                old.unlink()
+        except ValueError:
+            pass
+
+    target.write_bytes(data)
+    with db() as conn:
+        conn.execute(
+            """
+            UPDATE users
+            SET profile_image_path = ?,
+                profile_image_content_type = ?,
+                profile_image_width = ?,
+                profile_image_height = ?,
+                updated_at = ?
+            WHERE id = ?
+            """,
+            (str(target), content_type, width, height, utc_now(), user["id"]),
+        )
+        log_user_history(
+            conn,
+            user["id"],
+            "profile_image_updated",
+            "Uploaded a profile picture.",
+            {"filename": file.filename or target.name, "content_type": content_type, "bytes": len(data), "width": width, "height": height},
+        )
+        updated = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
+    return {"user": row_to_user(updated)}
 
 
 @app.post("/api/upload")
@@ -961,6 +1120,13 @@ async def upload(file: UploadFile = File(...), user: sqlite3.Row = Depends(curre
                 image.height,
                 utc_now(),
             ),
+        )
+        log_user_history(
+            conn,
+            user["id"],
+            "room_uploaded",
+            "Uploaded a room photo.",
+            {"upload_id": upload_id, "filename": file.filename or f"upload{ext}", "width": image.width, "height": image.height},
         )
     return {
         "uploadId": upload_id,
@@ -1042,6 +1208,13 @@ def create_tour(payload: TourCreatePayload, user: sqlite3.Row = Depends(current_
             ),
         )
         row = conn.execute("SELECT * FROM tours WHERE id = ?", (tour_id,)).fetchone()
+        log_user_history(
+            conn,
+            user["id"],
+            "tour_created",
+            f"Generated {title}.",
+            {"tour_id": tour_id, "room_type": room_type, "style": style},
+        )
     return {"tourId": tour_id, "tour": tour_to_json(row)}
 
 
@@ -1075,6 +1248,7 @@ def favorite_tour(tour_id: str, user: sqlite3.Row = Depends(current_user)) -> di
 def delete_tour(tour_id: str, user: sqlite3.Row = Depends(current_user)) -> dict[str, bool]:
     row = find_tour(tour_id, user["id"])
     with db() as conn:
+        log_user_history(conn, user["id"], "tour_deleted", f"Deleted {row['title']}.", {"tour_id": tour_id})
         conn.execute("DELETE FROM tours WHERE id = ? AND user_id = ?", (tour_id, user["id"]))
     tour_dir = Path(row["pano_path"]).parent
     if tour_dir.exists() and tour_dir.is_relative_to(TOURS_DIR):
@@ -1135,6 +1309,12 @@ def update_tour_flag(tour_id: str, user_id: str, column: str) -> dict[str, Any]:
             (new_value, utc_now(), tour_id, user_id),
         )
         updated = conn.execute("SELECT * FROM tours WHERE id = ?", (tour_id,)).fetchone()
+        event_type = "tour_saved" if column == "saved" else "tour_favorited"
+        verb = "Saved" if column == "saved" else "Favorited"
+        if not new_value:
+            event_type = "tour_unsaved" if column == "saved" else "tour_unfavorited"
+            verb = "Removed saved mark from" if column == "saved" else "Removed favorite from"
+        log_user_history(conn, user_id, event_type, f"{verb} {updated['title']}.", {"tour_id": tour_id})
     return {"tour": tour_to_json(updated)}
 
 

@@ -249,13 +249,14 @@
 <div class="absolute inset-0 bg-gradient-to-b from-secondary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
 <div class="relative w-32 h-32 mb-6">
 <div class="absolute inset-0 rounded-full border border-secondary/30 scale-105 animate-[spin_10s_linear_infinite]"></div>
-<img alt="Alexander Thorne" class="w-full h-full object-cover rounded-full border-2 border-surface-container" data-alt="A close-up, high-fashion architectural portrait of Alexander Thorne. He is wearing a minimalist dark turtleneck. The background is a sleek, dark concrete wall with a single sliver of warm, golden hour light cutting across it. The image is highly detailed, atmospheric, and conveys luxury and professional expertise." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhzNNhbXUOxqSk8ojNeGalvZhLyYSLcqhRo4E6l8EIxqmYQdB3MYubW5t4SEZD3I6E553wUAtzjm9Q18jpSnpS_fJehSVeXN5EK2np0anx_1QkaEC3RZaySz-j-R6ck6z9O6ZRDWHuDzWYifeHWu3LpUi7fR2ZhJ0jYqFhmQg9mt-k0kSr_KWkHgZAugHrAm18xL9YxEMt66ScNJfCpFwS96ZWBVxmQNQ9OujSv-Mk3wO8H8-TLF-0UHUCAG3wHaU8neIXITbvvG0"/>
-<button class="absolute bottom-0 right-0 w-8 h-8 bg-surface-container-high rounded-full border border-white/10 flex items-center justify-center hover:bg-secondary hover:text-surface transition-colors">
+<img alt="Alexander Thorne" class="w-full h-full object-cover rounded-full border-2 border-surface-container" data-aether-avatar data-alt="A close-up, high-fashion architectural portrait of Alexander Thorne. He is wearing a minimalist dark turtleneck. The background is a sleek, dark concrete wall with a single sliver of warm, golden hour light cutting across it. The image is highly detailed, atmospheric, and conveys luxury and professional expertise." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhzNNhbXUOxqSk8ojNeGalvZhLyYSLcqhRo4E6l8EIxqmYQdB3MYubW5t4SEZD3I6E553wUAtzjm9Q18jpSnpS_fJehSVeXN5EK2np0anx_1QkaEC3RZaySz-j-R6ck6z9O6ZRDWHuDzWYifeHWu3LpUi7fR2ZhJ0jYqFhmQg9mt-k0kSr_KWkHgZAugHrAm18xL9YxEMt66ScNJfCpFwS96ZWBVxmQNQ9OujSv-Mk3wO8H8-TLF-0UHUCAG3wHaU8neIXITbvvG0"/>
+<button class="absolute bottom-0 right-0 w-8 h-8 bg-surface-container-high rounded-full border border-white/10 flex items-center justify-center hover:bg-secondary hover:text-surface transition-colors" data-aether-avatar-button title="Upload profile picture" aria-label="Upload profile picture">
 <span class="material-symbols-outlined text-[16px]">edit</span>
 </button>
 </div>
-<h3 class="font-headline-sm text-headline-sm text-on-surface mb-1">Alexander Thorne</h3>
-<p class="font-body-md text-body-md text-on-surface-variant mb-4">alex.thorne@studio.aether</p>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-1" data-aether-username>Alexander Thorne</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4" data-aether-email>alex.thorne@studio.aether</p>
+<input class="hidden" type="file" accept="image/png,image/jpeg,image/jpg,image/webp" data-aether-avatar-input/>
 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/10 border border-secondary/20 mb-6">
 <span class="material-symbols-outlined text-secondary text-[14px]">workspace_premium</span>
 <span class="font-label-caps text-label-caps text-secondary">PRO ARCHITECT</span>
@@ -271,14 +272,14 @@
 <span class="material-symbols-outlined text-[20px] opacity-70">folder_open</span>
 <span class="font-body-md text-body-md">Project Count</span>
 </div>
-<span class="font-headline-sm text-headline-sm text-on-surface">42</span>
+<span class="font-headline-sm text-headline-sm text-on-surface" data-aether-stat-projects>42</span>
 </div>
 <div class="flex justify-between items-center pb-4 border-b border-white/5">
 <div class="flex items-center gap-3 text-on-surface-variant">
 <span class="material-symbols-outlined text-[20px] opacity-70">favorite</span>
 <span class="font-body-md text-body-md">Saved Designs</span>
 </div>
-<span class="font-headline-sm text-headline-sm text-on-surface">28</span>
+<span class="font-headline-sm text-headline-sm text-on-surface" data-aether-stat-saved>28</span>
 </div>
 <div>
 <div class="flex justify-between items-center mb-2">
@@ -297,6 +298,30 @@
 </div>
 <!-- Right/Main Column (8 cols) -->
 <div class="lg:col-span-8 flex flex-col gap-8">
+<!-- Account Identity -->
+<div class="glass-panel rounded-xl p-8">
+<div class="flex items-center gap-3 mb-8">
+<span class="material-symbols-outlined text-secondary text-[24px]">manage_accounts</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Account Identity</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<label class="block">
+<span class="block font-label-sm text-label-sm text-on-surface-variant mb-3 uppercase tracking-wider">Username</span>
+<input class="w-full bg-surface-container-high border border-white/10 rounded-lg px-4 py-3 text-on-surface focus:border-secondary focus:ring-secondary" data-aether-username-input maxlength="80" type="text" value="Alexander Thorne"/>
+</label>
+<label class="block">
+<span class="block font-label-sm text-label-sm text-on-surface-variant mb-3 uppercase tracking-wider">Email ID</span>
+<input class="w-full bg-surface-container-high border border-white/10 rounded-lg px-4 py-3 text-on-surface-variant" data-aether-email-input readonly type="email" value="alex.thorne@studio.aether"/>
+</label>
+</div>
+<div class="mt-6 flex flex-wrap items-center gap-3">
+<button class="inline-flex items-center gap-2 px-4 py-3 rounded-lg border border-white/10 text-on-surface hover:border-secondary/60 hover:text-secondary transition-colors" data-aether-avatar-button type="button">
+<span class="material-symbols-outlined text-[18px]">add_photo_alternate</span>
+<span class="font-label-sm text-label-sm">Upload Profile Picture</span>
+</button>
+<span class="font-label-sm text-label-sm text-on-surface-variant" data-aether-avatar-meta>Original quality</span>
+</div>
+</div>
 <!-- Design Preferences (Hero Card) -->
 <div class="glass-panel rounded-xl p-8 relative overflow-hidden">
 <!-- Decorative bg -->
@@ -353,6 +378,22 @@
 </div>
 <!-- Two Column Grid for Account & Notifications -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Appearance -->
+<div class="glass-panel rounded-xl p-6">
+<h4 class="font-label-sm text-label-sm font-semibold text-on-surface mb-6 uppercase tracking-wider flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] opacity-70">contrast</span>
+                                Appearance
+                            </h4>
+<div class="flex items-center justify-between">
+<div>
+<p class="font-body-md text-body-md text-on-surface">Dark / Light Mode</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Switch the interface theme.</p>
+</div>
+<button class="w-12 h-12 rounded-full bg-surface-container-high border border-white/10 flex items-center justify-center hover:bg-secondary hover:text-surface transition-colors" data-aether-theme-toggle type="button" aria-label="Toggle theme">
+<span class="material-symbols-outlined text-[22px]">dark_mode</span>
+</button>
+</div>
+</div>
 <!-- Account Settings -->
 <div class="glass-panel rounded-xl p-6">
 <h4 class="font-label-sm text-label-sm font-semibold text-on-surface mb-6 uppercase tracking-wider flex items-center gap-2">
@@ -442,6 +483,16 @@
 </div>
 </div>
 </div>
+</div>
+</div>
+<!-- User History -->
+<div class="glass-panel rounded-xl p-6">
+<h4 class="font-label-sm text-label-sm font-semibold text-on-surface mb-6 uppercase tracking-wider flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] opacity-70">history</span>
+                                User History
+                            </h4>
+<div class="space-y-4" data-aether-history>
+<p class="font-body-md text-body-md text-on-surface-variant">No account activity yet.</p>
 </div>
 </div>
 <!-- Save Actions -->
