@@ -113,6 +113,8 @@ Open this URL in your browser:
 http://127.0.0.1:8000/app/
 ```
 
+Use `/app/` as the stable entry URL. Avoid bookmarking nested frontend HTML paths because page folder names can change between builds.
+
 The root URL redirects to the app:
 
 ```text
@@ -251,6 +253,7 @@ This build does not call a hosted AI image model. The redesign is generated loca
 - If login fails after deleting files under `BACKEND/data/`, register a new local account because the SQLite database was removed.
 - If the viewer is blank, confirm a tour was generated and the panorama file exists in `BACKEND/data/tours/`.
 - If the browser says the site cannot be reached, make sure the terminal running Uvicorn is still open and that `http://127.0.0.1:8000/api/health` returns `{"ok":true}`.
+- If the health check works but the browser keeps opening an old nested page, open `http://127.0.0.1:8000/app/` directly and hard refresh the browser tab.
 
 ## Git Notes
 
