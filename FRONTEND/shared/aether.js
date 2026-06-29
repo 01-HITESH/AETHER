@@ -190,7 +190,10 @@
     style.textContent =
       "body.aether-light{background:#f7f5ef!important;color:#202124!important;}" +
       "body.aether-light .glass-panel,body.aether-light .glass-card{background:rgba(255,255,255,.78)!important;border-color:rgba(32,33,36,.12)!important;box-shadow:0 10px 30px rgba(32,33,36,.08)!important;}" +
-      "body.aether-light nav,body.aether-light header{background:rgba(250,248,242,.88)!important;border-color:rgba(32,33,36,.1)!important;box-shadow:none!important;}" +
+      "body.aether-light nav,body.aether-light header,body.aether-light aside{background:rgba(255,250,240,.48)!important;border-color:rgba(32,33,36,.1)!important;box-shadow:0 18px 44px rgba(32,33,36,.08)!important;backdrop-filter:blur(22px) saturate(1.28)!important;-webkit-backdrop-filter:blur(22px) saturate(1.28)!important;}" +
+      "body.aether-light nav[class*='bg-surface'],body.aether-light nav[class*='bg-background'],body.aether-light header[class*='bg-surface'],body.aether-light header[class*='bg-background'],body.aether-light aside[class*='bg-surface'],body.aether-light aside[class*='bg-background']{background:rgba(255,250,240,.42)!important;}" +
+      "body.aether-light nav.fixed,body.aether-light nav.sticky,body.aether-light header.fixed,body.aether-light header.sticky,body.aether-light aside.fixed,body.aether-light aside.sticky{background:rgba(255,250,240,.54)!important;}" +
+      "body.aether-light nav a,body.aether-light aside a,body.aether-light header a,body.aether-light nav button,body.aether-light aside button,body.aether-light header button{background-color:transparent!important;}" +
       "body.aether-light .bg-background,body.aether-light .bg-surface,body.aether-light .bg-surface-container-lowest,body.aether-light .bg-surface-container-low,body.aether-light .bg-surface-container,body.aether-light .bg-surface-container-high,body.aether-light .bg-surface-container-highest,body.aether-light .bg-primary-container{background-color:#f7f5ef!important;}" +
       "body.aether-light .text-on-surface,body.aether-light .text-on-background,body.aether-light .text-primary{color:#202124!important;}" +
       "body.aether-light .text-on-surface-variant{color:#60646b!important;}" +
