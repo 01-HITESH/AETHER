@@ -1,12 +1,12 @@
 /*
- * AETHER — shared frontend runtime
+ * AETHER - shared frontend runtime
  * --------------------------------
  * One script, loaded on every page (added just before </body>). It provides:
- *   • AetherAPI    — thin fetch wrapper around the /api backend with bearer auth
- *   • session guard — redirect to auth when logged out / into app when logged in
- *   • label nav     — every button/link navigates according to its visible text
- *   • toasts        — lightweight feedback for success/error
- *   • page modules  — per-page wiring keyed off the folder name in the URL
+ *   - AetherAPI     - thin fetch wrapper around the /api backend with bearer auth
+ *   - session guard - redirect to auth when logged out / into app when logged in
+ *   - label nav     - every button/link navigates according to its visible text
+ *   - toasts        - lightweight feedback for success/error
+ *   - page modules  - per-page wiring keyed off the folder name in the URL
  *
  * The page markup is never restructured; behaviour is attached on top of it.
  */
@@ -214,14 +214,38 @@
     "aether_ai_interior_design_hero_1": true,
     "aether_ai_interior_design_hero_2": true,
   };
+
+  function isPublicPage(folder) {
+    return !!PUBLIC_PAGES[folder];
+  }
+
+  function safeNextUrl() {
+    var raw = new URLSearchParams(location.search).get("next") || "";
+    if (!raw) return "";
+    try {
+      var next = new URL(raw, location.origin);
+      if (next.origin !== location.origin) return "";
+      if (next.pathname.indexOf(APP_BASE + "/") !== 0) return "";
+      if (next.pathname.indexOf("/aether_authentication/") >= 0) return "";
+      return next.pathname + next.search + next.hash;
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function authUrl(nextUrl) {
+    var url = page("aether_authentication");
+    return nextUrl ? url + "?next=" + encodeURIComponent(nextUrl) : url;
+  }
+
   function guard() {
     var authed = AetherAPI.isAuthed();
     if (PAGE === "aether_authentication") {
-      if (authed) location.replace(page("aether_dashboard"));
+      if (authed) location.replace(safeNextUrl() || page("aether_dashboard"));
       return;
     }
-    if (!PUBLIC_PAGES[PAGE] && !authed) {
-      location.replace(page("aether_authentication"));
+    if (!isPublicPage(PAGE) && !authed) {
+      location.replace(authUrl(location.pathname + location.search + location.hash));
     }
   }
 
@@ -247,6 +271,7 @@
     ["studio", "aether_dashboard"],
     ["resources", "aether_project_details"],
     // hero / marketing
+    ["start design", "aether_upload_room"],
     ["start designing", "aether_upload_room"],
     ["view demo", "aether_interactive_3d_walkthrough"],
     ["get started", "aether_upload_room"],
@@ -267,7 +292,7 @@
     ["gallery", "aether_saved_designs"],
   ];
 
-  // Buttons whose behaviour is owned by a page module — never auto-navigate these.
+  // Buttons whose behaviour is owned by a page module - never auto-navigate these.
   var RESERVED_TEXT = [
     "browse files", "sign in", "sign up", "log in", "login", "create account",
     "continue with google", "save design", "save", "share", "export 3d",
@@ -310,7 +335,8 @@
       var target = resolveTarget(t);
       if (target && target !== PAGE) {
         e.preventDefault();
-        location.href = page(target);
+        var destination = page(target);
+        location.href = (!AetherAPI.isAuthed() && !isPublicPage(target)) ? authUrl(destination) : destination;
       } else if (href === "#" && /privacy|terms|legal|contact|press|sustainability|notifications|filter|sort|resources/.test(t)) {
         e.preventDefault();
         toast("This local demo action is available without leaving AETHER.");
@@ -336,7 +362,7 @@
     var done = function (res) {
       AetherAPI.setToken(res.token); AetherAPI.setUser(res.user);
       toast("Welcome to AETHER, " + (res.user.name || "Designer") + ".");
-      setTimeout(function () { location.href = page("aether_dashboard"); }, 500);
+      setTimeout(function () { location.href = safeNextUrl() || page("aether_dashboard"); }, 500);
     };
     var fail = function (err) { toast(err.message || "Authentication failed.", "error"); };
 
@@ -344,22 +370,16 @@
       if (e) e.preventDefault();
       var email = val("email"), password = val("password");
       if (!email || !password) { toast("Please enter your email and password.", "error"); return; }
-      AetherAPI.login(email, password).then(done).catch(function (err) {
-        // First-time email: auto-provision so the demo flows smoothly.
-        if (err.status === 401) AetherAPI.register("Designer", email, password).then(done).catch(fail);
-        else fail(err);
-      });
+      AetherAPI.login(email, password).then(done).catch(fail);
     }
 
     function doSignUp(e) {
       if (e) e.preventDefault();
       var name = val("name"), email = val("email-up"), password = val("password-up"), confirm = val("password-confirm");
-      if (!email || !password) { toast("Please complete the sign-up form.", "error"); return; }
+      if (!name || !email || !password) { toast("Please complete the sign-up form.", "error"); return; }
+      if (password.length < 8) { toast("Password must be at least 8 characters.", "error"); return; }
       if (confirm && password !== confirm) { toast("Passwords do not match.", "error"); return; }
-      AetherAPI.register(name, email, password).then(done).catch(function (err) {
-        if (err.status === 409) AetherAPI.login(email, password).then(done).catch(fail); // already exists → log in
-        else fail(err);
-      });
+      AetherAPI.register(name, email, password).then(done).catch(fail);
     }
 
     // Wire the two real forms / submit buttons by their IDs.
@@ -372,14 +392,14 @@
     if (siBtn) { siBtn.addEventListener("click", doSignIn); siBtn.dataset.aetherHandled = "1"; }
     if (suBtn) { suBtn.addEventListener("click", doSignUp); suBtn.dataset.aetherHandled = "1"; }
 
-    // Neutralise the mockup's "Continue with Google" → dashboard bypass.
+    // Neutralise the mockup's "Continue with Google" to dashboard bypass.
     $all("button").forEach(function (b) {
       if (textOf(b).toLowerCase().indexOf("google") >= 0) {
         b.removeAttribute("onclick");
         b.dataset.aetherHandled = "1";
         b.addEventListener("click", function (e) {
           e.preventDefault();
-          toast("Social sign-in is disabled offline — use email & password.", "error");
+          toast("Social sign-in is disabled offline - use email & password.", "error");
         });
       }
     });
@@ -448,7 +468,7 @@
       reader.onload = function (ev) { showPreview(ev.target.result); };
       reader.readAsDataURL(file);
 
-      toast("Uploading photo…");
+      toast("Uploading photo...");
       AetherAPI.upload(file).then(function (res) {
         uploaded = true;
         Draft.set({ uploadId: res.uploadId, roomType: roomType, sourceUrl: res.url });
@@ -579,12 +599,12 @@
     $all("span").forEach(function (s) { if (!pctLabel && /^\d{1,3}%$/.test(textOf(s))) pctLabel = s; });
 
     if (!d.uploadId) {
-      toast("No uploaded photo found — returning to upload.", "error");
+      toast("No uploaded photo found - returning to upload.", "error");
       setTimeout(function () { location.href = page("aether_upload_room"); }, 1500);
       return;
     }
 
-    toast("Generating your 360° tour…");
+    toast("Generating your 360 tour...");
     var pct = 0;
     var fakeTimer = setInterval(function () {
       pct = Math.min(92, pct + Math.random() * 9);
@@ -600,7 +620,7 @@
       clearInterval(fakeTimer);
       setProgress(100);
       Draft.set({ tourId: res.tourId });
-      toast("Tour ready. Opening results…");
+      toast("Tour ready. Opening results...");
       if (viewBtn) {
         viewBtn.classList.remove("opacity-50", "cursor-not-allowed", "bg-white/5");
         viewBtn.classList.add("bg-secondary", "text-on-secondary");
@@ -950,7 +970,7 @@
           if (currentPassword === null) return;
           var newPassword = prompt("New password");
           if (newPassword === null) return;
-          if (newPassword.length < 4) { toast("New password must be at least 4 characters.", "error"); return; }
+          if (newPassword.length < 8) { toast("New password must be at least 8 characters.", "error"); return; }
           AetherAPI.patchPassword(currentPassword, newPassword).then(function () {
             toast("Password updated.");
           }).catch(function (err) { toast(err.message || "Could not update password.", "error"); });

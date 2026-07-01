@@ -910,8 +910,8 @@ def health() -> dict[str, Any]:
 def register(payload: RegisterPayload) -> dict[str, Any]:
     email = validate_email(payload.email)
     password = payload.password
-    if len(password) < 4:
-        raise HTTPException(status_code=400, detail="Password must be at least 4 characters.")
+    if len(password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters.")
     user_id = new_id("usr")
     salt = secrets.token_hex(16)
     now = utc_now()
@@ -1011,8 +1011,8 @@ def patch_me(payload: ProfilePatch, user: sqlite3.Row = Depends(current_user)) -
 def patch_password(payload: PasswordPatch, user: sqlite3.Row = Depends(current_user)) -> dict[str, bool]:
     if not verify_password(payload.currentPassword, user["salt"], user["password_hash"]):
         raise HTTPException(status_code=401, detail="Current password is incorrect.")
-    if len(payload.newPassword) < 4:
-        raise HTTPException(status_code=400, detail="New password must be at least 4 characters.")
+    if len(payload.newPassword) < 8:
+        raise HTTPException(status_code=400, detail="New password must be at least 8 characters.")
     salt = secrets.token_hex(16)
     with db() as conn:
         conn.execute(

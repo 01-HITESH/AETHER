@@ -7,6 +7,7 @@ The app runs locally with FastAPI, SQLite, static frontend pages, Pillow, and Nu
 ## Features
 
 - Local account registration and login.
+- Landing page design CTAs redirect unauthenticated visitors to login before the design workflow opens.
 - SQLite-backed user database with sessions, profile settings, upload records, tour records, and account history.
 - Password storage with salted PBKDF2 hashes. Plain-text passwords are never stored.
 - Account settings page for updating the visible username.
@@ -156,6 +157,7 @@ pip install -r BACKEND\requirements.txt
 ## Project Layout
 
 - `BACKEND/app.py` - FastAPI application, database setup, auth, profile management, uploads, redesign generation, panorama generation, exports, and media serving.
+- `BACKEND/user_audit.py` - read-only utility for checking registered users, session counts, credential-hash metadata, account history, and saved design projects.
 - `BACKEND/requirements.txt` - Python dependency list.
 - `FRONTEND/` - static page mockups and app screens.
 - `FRONTEND/shared/aether.js` - shared frontend runtime for API calls, auth guards, navigation, profile settings, theme handling, and page wiring.
@@ -175,6 +177,18 @@ AETHER stores runtime data locally under `BACKEND/data/`.
 - `BACKEND/data/exports/` - generated export files.
 
 The backend automatically creates these folders at startup. If an older database exists at `BACKEND/data/aether.sqlite3`, the app copies it to `BACKEND/data/database/aether.sqlite3` during startup.
+
+## User/Admin Inspection
+
+Use `BACKEND/user_audit.py` to check registered users and their saved project data from the local SQLite database:
+
+```powershell
+python BACKEND\user_audit.py
+python BACKEND\user_audit.py --email user@example.com --show-projects
+python BACKEND\user_audit.py --include-credential-hashes --json
+```
+
+The app never stores plain-text passwords. Credentials are stored as salted PBKDF2-HMAC-SHA256 hashes, so the audit utility can show hash and salt metadata only when `--include-credential-hashes` is passed.
 
 ## Database Tables
 
