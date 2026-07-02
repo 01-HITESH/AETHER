@@ -16,11 +16,27 @@
   // ===========================================================================
   // Config & helpers
   // ===========================================================================
-  var APP_BASE = "/app";            // FRONTEND is mounted here by the backend
+  var APP_BASE = location.pathname.indexOf("/app/") === 0 ? "/app" : "";            // FRONTEND is mounted here by the backend
   var API_BASE = "/api";
   var PAGE = "aether_authentication/code.html"; // overwritten below
+  var DEMO_MODE = true;
+  var DEMO_AFTER_IMAGES = {
+    living_room: "https://images.unsplash.com/photo-1600210492493-0946911123ea?auto=format&fit=crop&w=1600&q=85",
+    bedroom: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1600&q=85",
+    kitchen: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1600&q=85",
+    bathroom: "https://images.unsplash.com/photo-1620626011761-996317b8d101?auto=format&fit=crop&w=1600&q=85",
+    office: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1600&q=85",
+    hall: "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=1600&q=85",
+  };
+  var DEMO_BEFORE_IMAGE = "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=85";
+  var DEMO_TOUR_ID = "demo-static-tour";
 
-  function page(folder) { return APP_BASE + "/" + folder + "/code.html"; }
+  function page(folder) {
+    if (location.protocol === "file:") return "../" + folder + "/code.html";
+    return APP_BASE ? APP_BASE + "/" + folder + "/code.html" : "/" + folder + "/code.html";
+  }
+
+  function pagePath(folder) { return "/" + folder + "/code.html"; }
 
   // Resolve which design folder we are on from the path.
   (function detectPage() {
@@ -69,6 +85,7 @@
     setUser: function (u) { localStorage.setItem("aether_user", JSON.stringify(u || {})); if (u) syncSession(u); },
     getUser: function () { try { return JSON.parse(localStorage.getItem("aether_user") || "{}"); } catch (e) { return {}; } },
     isAuthed: function () { return !!this.getToken(); },
+    isDemo: function () { return DEMO_MODE && this.getToken() === "demo-google-session"; },
 
     request: function (path, opts) {
       opts = opts || {};
@@ -106,11 +123,39 @@
     logout: function () {
       var self = this;
       return this.request("/auth/logout", { method: "POST" }).catch(function () {}).then(function () {
-        self.setToken(""); localStorage.removeItem("aether_user"); clearSession();
+        self.setToken("");
+        localStorage.removeItem("aether_user");
+        sessionStorage.removeItem("aether_draft");
+        clearSession();
       });
     },
-    me: function () { return this.request("/me"); },
-    patchMe: function (patch) { return this.request("/me", { method: "PATCH", json: patch }); },
+    me: function () {
+      if (this.isDemo()) {
+        var tours = demoHistory();
+        return Promise.resolve({
+          user: this.getUser(),
+          stats: {
+            projects: tours.length,
+            saved: tours.filter(function (t) { return t.saved; }).length,
+            favorites: tours.filter(function (t) { return t.favorite; }).length,
+          },
+          history: [{ type: "signed_in", summary: "Signed in with Google demo mode.", created_at: new Date().toISOString() }],
+        });
+      }
+      return this.request("/me");
+    },
+    patchMe: function (patch) {
+      if (this.isDemo()) {
+        var user = this.getUser();
+        user.name = patch.username || patch.name || user.name;
+        user.username = user.name;
+        user.settings = Object.assign({}, user.settings || {}, patch.settings || {});
+        user.updated_at = new Date().toISOString();
+        this.setUser(user);
+        return Promise.resolve({ user: user });
+      }
+      return this.request("/me", { method: "PATCH", json: patch });
+    },
     patchPassword: function (currentPassword, newPassword) {
       return this.request("/me/password", {
         method: "PATCH",
@@ -124,16 +169,55 @@
     },
 
     upload: function (file) {
+      if (this.isDemo()) {
+        return Promise.resolve({
+          uploadId: "demo-upload",
+          filename: (file && file.name) || "demo-before.jpg",
+          width: 1600,
+          height: 1067,
+          url: DEMO_BEFORE_IMAGE,
+        });
+      }
       var fd = new FormData();
       fd.append("file", file);
       return this.request("/upload", { method: "POST", body: fd });
     },
-    createTour: function (payload) { return this.request("/tours", { method: "POST", json: payload }); },
-    listTours: function () { return this.request("/tours"); },
-    getTour: function (id) { return this.request("/tours/" + encodeURIComponent(id)); },
-    saveTour: function (id) { return this.request("/tours/" + encodeURIComponent(id) + "/save", { method: "POST" }); },
-    favoriteTour: function (id) { return this.request("/tours/" + encodeURIComponent(id) + "/favorite", { method: "POST" }); },
-    deleteTour: function (id) { return this.request("/tours/" + encodeURIComponent(id), { method: "DELETE" }); },
+    createTour: function (payload) {
+      if (this.isDemo()) {
+        var roomType = (payload && payload.roomType) || Draft.get().roomType || "living_room";
+        var tour = upsertDemoTour({ room_type: roomType, room_label: roomLabel(roomType), redesign_url: roomAfterImage(roomType), pano_url: roomAfterImage(roomType), thumb_url: roomAfterImage(roomType) });
+        return Promise.resolve({ tourId: tour.id, tour: tour });
+      }
+      return this.request("/tours", { method: "POST", json: payload });
+    },
+    listTours: function () {
+      if (this.isDemo()) return Promise.resolve(demoToursResponse());
+      return this.request("/tours");
+    },
+    getTour: function (id) {
+      if (this.isDemo() || id === DEMO_TOUR_ID) {
+        var found = demoHistory().filter(function (t) { return t.id === (id || DEMO_TOUR_ID); })[0] || demoTour();
+        return Promise.resolve({ tour: found });
+      }
+      return this.request("/tours/" + encodeURIComponent(id));
+    },
+    saveTour: function (id) {
+      if (this.isDemo() || id === DEMO_TOUR_ID) return Promise.resolve({ tour: upsertDemoTour({ saved: true }) });
+      return this.request("/tours/" + encodeURIComponent(id) + "/save", { method: "POST" });
+    },
+    favoriteTour: function (id) {
+      if (this.isDemo() || id === DEMO_TOUR_ID) {
+        return Promise.resolve({ tour: upsertDemoTour({ favorite: true }) });
+      }
+      return this.request("/tours/" + encodeURIComponent(id) + "/favorite", { method: "POST" });
+    },
+    deleteTour: function (id) {
+      if (this.isDemo() || id === DEMO_TOUR_ID) {
+        setDemoHistory(demoHistory().filter(function (item) { return item.id !== (id || DEMO_TOUR_ID); }));
+        return Promise.resolve({ ok: true });
+      }
+      return this.request("/tours/" + encodeURIComponent(id), { method: "DELETE" });
+    },
     exportUrl: function (id, kind) {
       var token = this.getToken();
       var url = API_BASE + "/tours/" + encodeURIComponent(id) + "/export/" + encodeURIComponent(kind);
@@ -183,6 +267,75 @@
   }
   window.aetherToast = toast;
 
+  function googleEmailDialog() {
+    return new Promise(function (resolve, reject) {
+      var existing = $("#aether-google-email-dialog");
+      if (existing) existing.remove();
+
+      var overlay = document.createElement("div");
+      overlay.id = "aether-google-email-dialog";
+      overlay.style.cssText = "position:fixed;inset:0;z-index:10000;background:rgba(10,10,12,.72);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;padding:20px;";
+
+      var card = document.createElement("div");
+      card.style.cssText = "width:min(92vw,420px);border-radius:20px;background:#131315;border:1px solid rgba(255,255,255,.12);box-shadow:0 24px 80px rgba(0,0,0,.45);padding:24px;color:#e4e2e4;font-family:Inter,sans-serif;";
+
+      var title = document.createElement("div");
+      title.style.cssText = "font-size:20px;font-weight:600;margin-bottom:8px;";
+      title.textContent = "Continue with Google";
+
+      var desc = document.createElement("div");
+      desc.style.cssText = "font-size:14px;line-height:1.5;color:#c4c7c7;margin-bottom:16px;";
+      desc.textContent = "Enter your real Google email address to verify access.";
+
+      var input = document.createElement("input");
+      input.type = "email";
+      input.placeholder = "name@gmail.com";
+      input.style.cssText = "width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:inherit;padding:12px 14px;font-size:14px;outline:none;";
+
+      var actions = document.createElement("div");
+      actions.style.cssText = "display:flex;gap:10px;justify-content:flex-end;margin-top:18px;";
+
+      var cancel = document.createElement("button");
+      cancel.type = "button";
+      cancel.textContent = "Cancel";
+      cancel.style.cssText = "padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#e4e2e4;";
+
+      var submit = document.createElement("button");
+      submit.type = "button";
+      submit.textContent = "Verify";
+      submit.style.cssText = "padding:10px 14px;border-radius:10px;border:0;background:#d4c5a9;color:#382f1c;font-weight:700;";
+
+      function close() {
+        overlay.remove();
+      }
+      function submitEmail() {
+        var email = (input.value || "").trim().toLowerCase();
+        if (!isRealGoogleEmail(email)) {
+          toast("Enter a valid Google email address.", "error");
+          input.focus();
+          return;
+        }
+        close();
+        resolve(email);
+      }
+
+      cancel.addEventListener("click", function () { close(); reject(new Error("Cancelled")); });
+      submit.addEventListener("click", submitEmail);
+      input.addEventListener("keydown", function (e) { if (e.key === "Enter") submitEmail(); if (e.key === "Escape") { close(); reject(new Error("Cancelled")); } });
+
+      actions.appendChild(cancel);
+      actions.appendChild(submit);
+      card.appendChild(title);
+      card.appendChild(desc);
+      card.appendChild(input);
+      card.appendChild(actions);
+      overlay.appendChild(card);
+      overlay.addEventListener("click", function (e) { if (e.target === overlay) { close(); reject(new Error("Cancelled")); } });
+      document.body.appendChild(overlay);
+      input.focus();
+    });
+  }
+
   function ensureThemeStyles() {
     if ($("#aether-theme-style")) return;
     var style = document.createElement("style");
@@ -223,10 +376,14 @@
     var raw = new URLSearchParams(location.search).get("next") || "";
     if (!raw) return "";
     try {
+      if (location.protocol === "file:") {
+        if (raw.indexOf("aether_authentication") >= 0) return "";
+        return raw.indexOf("../") === 0 || raw.indexOf("./") === 0 ? raw : "../" + raw.replace(/^\/?app\/?/, "");
+      }
       var next = new URL(raw, location.origin);
       if (next.origin !== location.origin) return "";
-      if (next.pathname.indexOf(APP_BASE + "/") !== 0) return "";
-      if (next.pathname.indexOf("/aether_authentication/") >= 0) return "";
+      if (next.pathname.indexOf(pagePath("aether_authentication")) >= 0) return "";
+      if (next.pathname.indexOf("/aether_") !== 0) return "";
       return next.pathname + next.search + next.hash;
     } catch (e) {
       return "";
@@ -236,6 +393,119 @@
   function authUrl(nextUrl) {
     var url = page("aether_authentication");
     return nextUrl ? url + "?next=" + encodeURIComponent(nextUrl) : url;
+  }
+
+  function isRealGoogleEmail(email) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email || "")) return false;
+    var domain = email.split("@").pop().toLowerCase();
+    var local = email.split("@")[0];
+    if (local.length < 3 || local.length > 64) return false;
+    return domain === "gmail.com" || domain === "googlemail.com" || domain === "google.com";
+  }
+
+  function demoStoreKey(suffix) {
+    var user = AetherAPI.getUser();
+    var email = (user && user.email) || "anonymous";
+    return "aether_demo_" + suffix + "_" + email.toLowerCase();
+  }
+
+  function demoHistory() {
+    try { return JSON.parse(localStorage.getItem(demoStoreKey("history")) || "[]"); }
+    catch (e) { return []; }
+  }
+
+  function setDemoHistory(items) {
+    localStorage.setItem(demoStoreKey("history"), JSON.stringify(items || []));
+  }
+
+  function roomAfterImage(roomType) {
+    return DEMO_AFTER_IMAGES[roomType] || DEMO_AFTER_IMAGES.living_room;
+  }
+
+  function roomLabel(roomType) {
+    var labels = {
+      living_room: "Living Room",
+      bedroom: "Bedroom",
+      kitchen: "Kitchen",
+      bathroom: "Bathroom",
+      office: "Office",
+      hall: "Hall",
+    };
+    return labels[roomType] || "Living Room";
+  }
+
+  function currentDemoDraft() {
+    var draft = Draft.get();
+    var roomType = draft.roomType || "living_room";
+    return {
+      roomType: roomType,
+      sourceUrl: draft.sourceUrl || "",
+      afterUrl: draft.afterUrl || roomAfterImage(roomType),
+      style: draft.style || "modern",
+    };
+  }
+
+  function demoUser(email) {
+    var cleanEmail = (email || "google.demo@gmail.com").trim().toLowerCase();
+    var name = cleanEmail.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+    return {
+      id: "demo-google-user",
+      email: cleanEmail,
+      name: name || "Google User",
+      username: name || "Google User",
+      settings: { theme: currentTheme ? currentTheme() : "dark" },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  }
+
+  function demoTour(patch) {
+    var draft = currentDemoDraft();
+    var saved = false, favorite = false;
+    demoHistory().forEach(function (item) {
+      if (item.id === DEMO_TOUR_ID) {
+        saved = !!item.saved;
+        favorite = !!item.favorite;
+      }
+    });
+    return Object.assign({
+      id: DEMO_TOUR_ID,
+      upload_id: "demo-upload",
+      title: "AI " + roomLabel(draft.roomType),
+      room_type: draft.roomType,
+      room_label: roomLabel(draft.roomType),
+      style: draft.style,
+      style_label: prettyStyle(draft.style),
+      requirements: { notes: "Static frontend demo result." },
+      metadata: { generation: "frontend_static_demo" },
+      saved: saved,
+      favorite: favorite,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      source_url: draft.sourceUrl,
+      redesign_url: draft.afterUrl,
+      pano_url: draft.afterUrl,
+      thumb_url: draft.afterUrl,
+    }, patch || {});
+  }
+
+  function setDemoSession(email) {
+    var user = demoUser(email);
+    AetherAPI.setToken("demo-google-session");
+    AetherAPI.setUser(user);
+    return { token: AetherAPI.getToken(), user: user };
+  }
+
+  function demoToursResponse() {
+    return { tours: demoHistory() };
+  }
+
+  function upsertDemoTour(patch) {
+    var tour = demoTour(patch);
+    var items = demoHistory().filter(function (item) { return item.id !== tour.id; });
+    items.unshift(tour);
+    setDemoHistory(items);
+    return tour;
   }
 
   function guard() {
@@ -266,6 +536,8 @@
     ["profile", "aether_profile_settings"],
     ["settings", "aether_profile_settings"],
     ["account", "aether_profile_settings"],
+    ["account details", "aether_account_details"],
+    ["credentials", "aether_account_details"],
     ["upload room", "aether_upload_room"],
     ["generate space", "aether_upload_room"],
     ["studio", "aether_dashboard"],
@@ -324,7 +596,7 @@
       if (!t) return;
       if (t.indexOf("logout") >= 0 || t.indexOf("log out") >= 0) {
         e.preventDefault();
-        AetherAPI.logout().then(function () { location.href = page("aether_authentication"); });
+        AetherAPI.logout().then(function () { location.href = page("aether_ai_interior_design_hero_2"); });
         return;
       }
       // Honour real hrefs that already point somewhere meaningful.
@@ -354,6 +626,20 @@
   // Page modules
   // ===========================================================================
   var Pages = {};
+
+  // ---- Landing hero --------------------------------------------------------
+  Pages.aether_ai_interior_design_hero_2 = function () {
+    $all("button, a").forEach(function (el) {
+      var t = actionText(el).toLowerCase();
+      if (t.indexOf("start design") >= 0 || t.indexOf("start designing") >= 0) {
+        el.dataset.aetherHandled = "1";
+        el.addEventListener("click", function (e) {
+          e.preventDefault();
+          location.href = authUrl(page("aether_upload_room"));
+        });
+      }
+    });
+  };
 
   // ---- Authentication -------------------------------------------------------
   Pages.aether_authentication = function () {
@@ -392,14 +678,24 @@
     if (siBtn) { siBtn.addEventListener("click", doSignIn); siBtn.dataset.aetherHandled = "1"; }
     if (suBtn) { suBtn.addEventListener("click", doSignUp); suBtn.dataset.aetherHandled = "1"; }
 
-    // Neutralise the mockup's "Continue with Google" to dashboard bypass.
+    // Frontend-only Google demo sign-in. This bypasses the backend and creates
+    // the same local session shape used by the rest of the app.
     $all("button").forEach(function (b) {
       if (textOf(b).toLowerCase().indexOf("google") >= 0) {
         b.removeAttribute("onclick");
         b.dataset.aetherHandled = "1";
         b.addEventListener("click", function (e) {
           e.preventDefault();
-          toast("Social sign-in is disabled offline - use email & password.", "error");
+          googleEmailDialog().then(function (email) {
+            b.disabled = true;
+            b.style.opacity = "0.72";
+            toast("Checking Google email...");
+            setTimeout(function () {
+              var res = setDemoSession(email);
+              toast("Verified Google email: " + res.user.email + ".");
+              location.href = safeNextUrl() || page("aether_upload_room");
+            }, 600);
+          }).catch(function () {});
         });
       }
     });
@@ -450,18 +746,30 @@
       var label = radio.closest("label");
       var name = label ? textOf(label).toLowerCase() : "";
       Object.keys(ROOM_KEYS).forEach(function (k) { if (name.indexOf(k) >= 0) radio._roomKey = ROOM_KEYS[k]; });
-      radio.addEventListener("change", function () { if (radio._roomKey) { roomType = radio._roomKey; Draft.set({ roomType: roomType }); } });
+      radio.addEventListener("change", function () { if (radio._roomKey) { roomType = radio._roomKey; Draft.set({ roomType: roomType, afterUrl: roomAfterImage(roomType) }); } });
       if (radio.checked && radio._roomKey) roomType = radio._roomKey;
     });
 
     var existingDraft = Draft.get();
-    var uploaded = !!existingDraft.uploadId;
+    var uploaded = !!existingDraft.uploadId && !!existingDraft.sourceUrl;
     if (uploaded && continueBtn) continueBtn.classList.remove("opacity-50", "cursor-not-allowed");
-    if (uploaded && existingDraft.sourceUrl) showPreview(existingDraft.sourceUrl);
+    if (uploaded) showPreview(existingDraft.sourceUrl);
+
+    addUrlInput();
+
     function handleFile(file) {
       if (!file) return;
       if (!/image\/(png|jpe?g)/i.test(file.type)) { toast("Please choose a JPG or PNG image.", "error"); return; }
       if (file.size > 20 * 1024 * 1024) { toast("Image exceeds the 20MB limit.", "error"); return; }
+      if (DEMO_MODE) {
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+          setBeforeImage(ev.target.result);
+          toast("Before image loaded. Continue to choose a style.");
+        };
+        reader.readAsDataURL(file);
+        return;
+      }
 
       // Live preview inside the dropzone.
       var reader = new FileReader();
@@ -490,6 +798,41 @@
       img.src = src;
     }
 
+    function setBeforeImage(src) {
+      uploaded = true;
+      showPreview(src);
+      Draft.set({ uploadId: "demo-upload", roomType: roomType, sourceUrl: src, afterUrl: roomAfterImage(roomType), demoMode: true });
+      if (continueBtn) { continueBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
+    }
+
+    function addUrlInput() {
+      if (!dropzone || $("#aether-before-url")) return;
+      var wrap = document.createElement("div");
+      wrap.style.cssText = "margin-top:16px;display:flex;gap:8px;align-items:center;";
+      var input = document.createElement("input");
+      input.id = "aether-before-url";
+      input.type = "url";
+      input.placeholder = "Paste before image URL";
+      input.style.cssText = "flex:1;min-width:0;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:inherit;padding:10px 12px;";
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = "Use URL";
+      btn.style.cssText = "border-radius:8px;background:#d4c5a9;color:#382f1c;padding:10px 14px;font-weight:700;";
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        var value = input.value.trim();
+        if (!/^https?:\/\/.+\.(jpg|jpeg|png|webp)(\?.*)?$/i.test(value)) {
+          toast("Paste a direct JPG, PNG, or WebP image URL.", "error");
+          return;
+        }
+        setBeforeImage(value);
+        toast("Before image URL loaded.");
+      });
+      wrap.appendChild(input);
+      wrap.appendChild(btn);
+      dropzone.parentElement && dropzone.parentElement.appendChild(wrap);
+    }
+
     if (dropzone) {
       dropzone.addEventListener("click", function () { fileInput.click(); });
       ["dragover", "dragenter"].forEach(function (ev) {
@@ -515,6 +858,7 @@
       continueBtn.addEventListener("click", function (e) {
         e.preventDefault();
         if (!uploaded) { toast("Please upload a room photo first.", "error"); return; }
+        Draft.set({ roomType: roomType, afterUrl: roomAfterImage(roomType) });
         location.href = page("aether_style_selection");
       });
     }
@@ -573,6 +917,12 @@
       gen.dataset.aetherHandled = "1";
       gen.addEventListener("click", function (e) {
       e.preventDefault();
+      var draft = Draft.get();
+      if (!draft.sourceUrl) {
+        toast("Upload or enter a before image first.", "error");
+        location.href = page("aether_upload_room");
+        return;
+      }
       var textareas = $all("textarea");
       var notes = textareas.map(function (t) { return t.value.trim(); }).filter(Boolean).join(" | ");
       var budget = $("input[type='range']");
@@ -581,7 +931,13 @@
         palette: selectedPalette,
         budget_level: budget ? Number(budget.value) : null,
       } });
-      location.href = page("aether_generating_design");
+      if (DEMO_MODE) {
+        runDemoButtonReveal(gen, function () {
+          location.href = page("aether_explore_results") + "?tour=" + DEMO_TOUR_ID;
+        });
+      } else {
+        location.href = page("aether_generating_design");
+      }
       });
     }
     wireBack();
@@ -598,40 +954,39 @@
     var pctLabel = null;
     $all("span").forEach(function (s) { if (!pctLabel && /^\d{1,3}%$/.test(textOf(s))) pctLabel = s; });
 
-    if (!d.uploadId) {
-      toast("No uploaded photo found - returning to upload.", "error");
-      setTimeout(function () { location.href = page("aether_upload_room"); }, 1500);
+    d = Draft.get();
+    if (!d.sourceUrl) {
+      toast("Upload or enter a before image first.", "error");
+      location.href = page("aether_upload_room");
       return;
     }
 
-    toast("Generating your 360 tour...");
+    toast("Generating demo redesign...");
     var pct = 0;
     var fakeTimer = setInterval(function () {
-      pct = Math.min(92, pct + Math.random() * 9);
+      pct = Math.min(96, pct + 12);
       setProgress(pct);
-    }, 320);
+    }, 300);
 
-    AetherAPI.createTour({
-      uploadId: d.uploadId,
-      roomType: d.roomType || "living_room",
-      style: d.style || "modern",
-      requirements: d.requirements || {},
-    }).then(function (res) {
+    setTimeout(function () {
       clearInterval(fakeTimer);
       setProgress(100);
-      Draft.set({ tourId: res.tourId });
-      toast("Tour ready. Opening results...");
+      Draft.set({
+        uploadId: "demo-upload",
+        tourId: DEMO_TOUR_ID,
+        sourceUrl: d.sourceUrl || DEMO_BEFORE_IMAGE,
+        afterUrl: d.afterUrl || roomAfterImage(d.roomType || "living_room"),
+        demoMode: true,
+      });
+      toast("Demo redesign ready. Revealing after image...");
       if (viewBtn) {
         viewBtn.classList.remove("opacity-50", "cursor-not-allowed", "bg-white/5");
         viewBtn.classList.add("bg-secondary", "text-on-secondary");
         viewBtn.removeAttribute("disabled");
-        viewBtn.addEventListener("click", function (e) { e.preventDefault(); location.href = page("aether_explore_results") + "?tour=" + res.tourId; });
+        viewBtn.addEventListener("click", function (e) { e.preventDefault(); location.href = page("aether_explore_results") + "?tour=" + DEMO_TOUR_ID; });
       }
-      setTimeout(function () { location.href = page("aether_explore_results") + "?tour=" + res.tourId; }, 1200);
-    }).catch(function (err) {
-      clearInterval(fakeTimer);
-      toast(err.message || "Generation failed.", "error");
-    });
+      location.href = page("aether_explore_results") + "?tour=" + DEMO_TOUR_ID;
+    }, 3000);
 
     function setProgress(p) {
       var v = Math.round(p);
@@ -651,7 +1006,7 @@
 
   // ---- Explore results (+ interactive variant) ------------------------------
   function resultsModule() {
-    var id = new URLSearchParams(location.search).get("tour") || Draft.get().tourId;
+    var id = new URLSearchParams(location.search).get("tour") || Draft.get().tourId || DEMO_TOUR_ID;
     var open = findButtonByText(/open 3d walkthrough/i) || findButtonByText(/3d walkthrough/i);
     if (open) open.addEventListener("click", function (e) {
       e.preventDefault();
@@ -680,7 +1035,7 @@
     var open = findButtonByText(/open 3d walkthrough/i) || findButtonByText(/3d walkthrough/i);
     AetherAPI.listTours().then(function (res) {
       var tours = res.tours || [];
-      var id = new URLSearchParams(location.search).get("tour") || (tours[0] && tours[0].id);
+      var id = new URLSearchParams(location.search).get("tour") || (tours[0] && tours[0].id) || DEMO_TOUR_ID;
       if (open) {
         open.dataset.aetherHandled = "1";
         open.addEventListener("click", function (e) { e.preventDefault(); location.href = page("aether_interactive_3d_walkthrough") + (id ? "?tour=" + id : ""); });
@@ -759,6 +1114,98 @@
     bindThemeToggle(AetherAPI.getUser());
   };
 
+  // ---- Account details -----------------------------------------------------
+  Pages.aether_account_details = function () {
+    var currentUser = AetherAPI.getUser();
+    var currentStats = { projects: 0, saved: 0, favorites: 0 };
+
+    function renderHistory(items) {
+      var host = $all("[data-aether-account-history]")[0];
+      if (!host) return;
+      host.innerHTML = "";
+      var history = items || [];
+      if (!history.length) {
+        var empty = document.createElement("p");
+        empty.className = "font-body-md text-body-md text-on-surface-variant";
+        empty.textContent = "No credential activity recorded yet.";
+        host.appendChild(empty);
+        return;
+      }
+      history.slice(0, 6).forEach(function (item) {
+        var row = document.createElement("div");
+        row.className = "flex items-start gap-3 rounded-xl border border-white/8 bg-white/3 px-4 py-3";
+        var icon = document.createElement("span");
+        icon.className = "material-symbols-outlined text-secondary text-[18px] mt-0.5";
+        icon.textContent = historyIcon(item.type);
+        var body = document.createElement("div");
+        var title = document.createElement("p");
+        title.className = "font-body-md text-body-md text-on-surface";
+        title.textContent = item.summary || "Account event";
+        var meta = document.createElement("p");
+        meta.className = "font-label-sm text-label-sm text-on-surface-variant mt-1";
+        meta.textContent = formatDateTime(item.created_at || new Date().toISOString());
+        body.appendChild(title);
+        body.appendChild(meta);
+        row.appendChild(icon);
+        row.appendChild(body);
+        host.appendChild(row);
+      });
+    }
+
+    function syncView(history) {
+      $all("[data-aether-account-name]").forEach(function (el) { el.textContent = currentUser.name || "Designer"; });
+      $all("[data-aether-account-email]").forEach(function (el) { el.textContent = currentUser.email || ""; });
+      $all("[data-aether-account-status]").forEach(function (el) { el.textContent = AetherAPI.isAuthed() ? "Authenticated" : "Signed out"; });
+      $all("[data-aether-account-session]").forEach(function (el) { el.textContent = currentUser.signedInAt || currentUser.updated_at || new Date().toISOString(); });
+      $all("[data-aether-account-projects]").forEach(function (el) { el.textContent = String(currentStats.projects || 0); });
+      $all("[data-aether-account-saved]").forEach(function (el) { el.textContent = String(currentStats.saved || 0); });
+      $all("[data-aether-account-favorites]").forEach(function (el) { el.textContent = String(currentStats.favorites || 0); });
+      renderHistory(history || []);
+    }
+
+    function refresh() {
+      AetherAPI.me().then(function (res) {
+        if (res.user) currentUser = res.user;
+        currentStats = res.stats || currentStats;
+        syncView(res.history || []);
+      }).catch(function () {
+        syncView([]);
+      });
+
+      AetherAPI.listTours().then(function (res) {
+        var tours = res.tours || [];
+        currentStats = {
+          projects: tours.length,
+          saved: tours.filter(function (t) { return t.saved; }).length,
+          favorites: tours.filter(function (t) { return t.favorite; }).length,
+        };
+        syncView([]);
+      }).catch(function () {});
+    }
+
+    refresh();
+
+    var copyEmail = findButtonByText(/copy email/i);
+    if (copyEmail) {
+      copyEmail.dataset.aetherHandled = "1";
+      copyEmail.addEventListener("click", function (e) {
+        e.preventDefault();
+        var email = currentUser.email || AetherAPI.getUser().email || "";
+        if (!email) { toast("No email available.", "error"); return; }
+        navigator.clipboard.writeText(email).then(function () { toast("Email copied to clipboard."); }).catch(function () { toast("Copy failed.", "error"); });
+      });
+    }
+
+    var signOut = findButtonByText(/sign out|log out/i);
+    if (signOut) {
+      signOut.dataset.aetherHandled = "1";
+      signOut.addEventListener("click", function (e) {
+        e.preventDefault();
+        AetherAPI.logout().then(function () { location.href = page("aether_ai_interior_design_hero_2"); });
+      });
+    }
+  };
+
   // The 3D viewer pages are handled by pano-viewer.js; nothing extra needed here,
   // but we still wire global nav + back on them.
   Pages.aether_interactive_3d_walkthrough = function () { wireViewerActions(); };
@@ -767,7 +1214,7 @@
   Pages.aether_refined_3d_walkthrough = function () {};
 
   function wireViewerActions() {
-    var id = new URLSearchParams(location.search).get("tour") || Draft.get().tourId;
+    var id = new URLSearchParams(location.search).get("tour") || Draft.get().tourId || DEMO_TOUR_ID;
     var save = findButtonByText(/save design/i);
     if (save && id) save.addEventListener("click", function (e) {
       e.preventDefault();
@@ -831,6 +1278,68 @@
       back.dataset.aetherHandled = "1";
       back.addEventListener("click", function (e) { e.preventDefault(); history.length > 1 ? history.back() : (location.href = page("aether_dashboard")); });
     }
+  }
+
+  function runDemoButtonReveal(button, done) {
+    if (!button) {
+      setTimeout(done, 3000);
+      return;
+    }
+    if (button.dataset.aetherDemoLoading === "1") return;
+    button.dataset.aetherDemoLoading = "1";
+    button.disabled = true;
+    var original = button.innerHTML;
+    button.innerHTML =
+      "<span class=\"inline-block w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin\"></span>" +
+      "<span>Generating...</span>";
+    button.classList.add("opacity-80", "cursor-wait");
+    renderDemoBeforeAfter(false);
+    setTimeout(function () {
+      var draft = Draft.get();
+      button.innerHTML = original;
+      button.disabled = false;
+      button.classList.remove("opacity-80", "cursor-wait");
+      button.dataset.aetherDemoLoading = "0";
+      Draft.set({
+        uploadId: "demo-upload",
+        tourId: DEMO_TOUR_ID,
+        sourceUrl: draft.sourceUrl || DEMO_BEFORE_IMAGE,
+        afterUrl: draft.afterUrl || roomAfterImage(draft.roomType || "living_room"),
+        demoMode: true,
+      });
+      renderDemoBeforeAfter(true);
+      if (done) done();
+    }, 3000);
+  }
+
+  function renderDemoBeforeAfter(showAfter) {
+    var draft = Draft.get();
+    var beforeImage = draft.sourceUrl || DEMO_BEFORE_IMAGE;
+    var afterImage = draft.afterUrl || roomAfterImage(draft.roomType || "living_room");
+    var host = $("#aether-demo-before-after");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "aether-demo-before-after";
+      host.style.cssText =
+        "position:fixed;left:20px;bottom:20px;z-index:9998;width:min(520px,calc(100vw - 40px));" +
+        "background:rgba(19,19,21,.92);border:1px solid rgba(255,255,255,.12);border-radius:12px;" +
+        "box-shadow:0 18px 60px rgba(0,0,0,.42);overflow:hidden;color:#e4e2e4;font:500 12px Inter,sans-serif;";
+      document.body.appendChild(host);
+    }
+    host.innerHTML =
+      "<div style=\"display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(255,255,255,.12);\">" +
+      "<figure style=\"margin:0;background:#111;\"><img src=\"" + beforeImage + "\" alt=\"Before room\" style=\"display:block;width:100%;aspect-ratio:4/3;object-fit:cover;\"><figcaption style=\"padding:8px 10px;background:#131315;\">Before</figcaption></figure>" +
+      "<figure style=\"margin:0;background:#111;position:relative;\"><img src=\"" + afterImage + "\" alt=\"After redesign\" style=\"display:block;width:100%;aspect-ratio:4/3;object-fit:cover;" + (showAfter ? "" : "filter:blur(8px);opacity:.35;") + "\">" +
+      (showAfter ? "" : "<div style=\"position:absolute;inset:0;display:grid;place-items:center;\"><span style=\"width:28px;height:28px;border:3px solid #d4c5a9;border-top-color:transparent;border-radius:9999px;animation:aether-spin .8s linear infinite;\"></span></div>") +
+      "<figcaption style=\"padding:8px 10px;background:#131315;\">After</figcaption></figure>" +
+      "</div>";
+    if (!$("#aether-demo-spinner-style")) {
+      var style = document.createElement("style");
+      style.id = "aether-demo-spinner-style";
+      style.textContent = "@keyframes aether-spin{to{transform:rotate(360deg)}}";
+      document.head.appendChild(style);
+    }
+    if (showAfter) setTimeout(function () { host.remove(); }, 1600);
   }
 
   function applyProfileSettings(settings) {

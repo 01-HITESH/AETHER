@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Account Details | AETHER</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  body { background:#131315; color:#e4e2e4; font-family:Inter,sans-serif; }
+  .glass-panel { background:rgba(255,255,255,.03); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,.08); }
+</style>
+</head>
+<body class="min-h-screen">
+<main class="max-w-6xl mx-auto px-6 py-10">
+  <header class="mb-8">
+    <p class="text-xs uppercase tracking-[0.2em] text-secondary mb-3">Secure account view</p>
+    <h1 class="text-3xl font-semibold text-on-surface">User Credentials & Activity</h1>
+    <p class="text-on-surface-variant mt-3 max-w-2xl">This page shows the current authenticated profile, session state, and project history for the signed-in user.</p>
+  </header>
+
+  <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="glass-panel rounded-2xl p-6">
+      <p class="text-sm text-on-surface-variant mb-2">Display Name</p>
+      <div class="text-2xl font-semibold" data-aether-account-name>Designer</div>
+      <p class="text-sm text-on-surface-variant mt-4 mb-2">Email</p>
+      <div class="break-all" data-aether-account-email></div>
+      <p class="text-sm text-on-surface-variant mt-4 mb-2">Status</p>
+      <div data-aether-account-status>Signed out</div>
+      <p class="text-sm text-on-surface-variant mt-4 mb-2">Session</p>
+      <div class="text-sm" data-aether-account-session>Not available</div>
+      <div class="mt-6 flex gap-3">
+        <button class="px-4 py-2 rounded-lg bg-secondary text-on-secondary" type="button">Copy Email</button>
+        <button class="px-4 py-2 rounded-lg border border-white/10" type="button" onclick="window.location.href='../aether_profile_settings/code.html'">Back</button>
+      </div>
+    </div>
+
+    <div class="glass-panel rounded-2xl p-6 lg:col-span-2">
+      <div class="grid grid-cols-3 gap-4 mb-6">
+        <div class="rounded-xl bg-white/5 p-4">
+          <div class="text-xs text-on-surface-variant">Projects</div>
+          <div class="text-3xl font-semibold text-secondary" data-aether-account-projects>0</div>
+        </div>
+        <div class="rounded-xl bg-white/5 p-4">
+          <div class="text-xs text-on-surface-variant">Saved</div>
+          <div class="text-3xl font-semibold text-secondary" data-aether-account-saved>0</div>
+        </div>
+        <div class="rounded-xl bg-white/5 p-4">
+          <div class="text-xs text-on-surface-variant">Favorites</div>
+          <div class="text-3xl font-semibold text-secondary" data-aether-account-favorites>0</div>
+        </div>
+      </div>
+      <h2 class="text-xl font-semibold mb-4">Recent Account Activity</h2>
+      <div class="space-y-3" data-aether-account-history></div>
+    </div>
+  </section>
+</main>
+<!-- AETHER_WIRED -->
+<script src="../shared/aether.js" defer></script>
+</body>
+</html>
