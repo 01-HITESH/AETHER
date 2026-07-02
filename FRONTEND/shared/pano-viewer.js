@@ -130,6 +130,173 @@
   function hideLoading() { overlay.style.display = "none"; }
   function showError(msg) { overlay.style.display = "flex"; overlay.textContent = msg; }
 
+  function fetchTour(tourId) {
+    return fetch(API_BASE + "/tours/" + encodeURIComponent(tourId), {
+      headers: token ? { Authorization: "Bearer " + token } : {},
+    }).then(function (r) {
+      if (!r.ok) throw new Error("tour fetch failed");
+      return r.json();
+    });
+  }
+
+  function resolveTour(tourId) {
+    if (window.AetherAPI && typeof window.AetherAPI.getTour === "function") {
+      return window.AetherAPI.getTour(tourId).catch(function () {
+        return fetchTour(tourId);
+      });
+    }
+    return fetchTour(tourId);
+  }
+
+  function tourPanoUrl(tour) {
+    return tour && (tour.pano_url || tour.panoUrl || "");
+  }
+
+  function tourAfterUrl(tour) {
+    return tour && (tour.after_url || tour.afterUrl || tour.redesign_url || tour.redesignUrl || tour.thumb_url || "");
+  }
+
+  function shouldGenerateFromAfter(tour, panoUrl, afterUrl) {
+    var metadata = (tour && tour.metadata) || {};
+    return !!afterUrl && (!panoUrl || panoUrl === afterUrl || metadata.generation === "frontend_static_demo" || tour.id === "demo-static-tour");
+  }
+
+  function applyCanvasTexture(canvas) {
+    var texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    sphere.material = new THREE.MeshBasicMaterial({ map: texture });
+    sphere.material.needsUpdate = true;
+    hideLoading();
+  }
+
+  function loadTourTexture(tour) {
+    var panoUrl = tourPanoUrl(tour);
+    var afterUrl = tourAfterUrl(tour);
+    if (shouldGenerateFromAfter(tour, panoUrl, afterUrl)) {
+      showError("Generating 360 view from after image...");
+      generatePanoramaFromAfter(afterUrl, applyCanvasTexture, function () {
+        if (panoUrl) applyTexture(panoUrl);
+        else makeDemoTexture();
+      });
+    } else if (panoUrl) {
+      applyTexture(panoUrl);
+    } else if (afterUrl) {
+      generatePanoramaFromAfter(afterUrl, applyCanvasTexture, makeDemoTexture);
+    } else {
+      makeDemoTexture();
+    }
+    if (tour) populatePanels(tour);
+  }
+
+  function generatePanoramaFromAfter(url, onReady, onError) {
+    var img = new Image();
+    if (!/^data:/i.test(url || "")) img.crossOrigin = "anonymous";
+    img.onload = function () {
+      try {
+        onReady(buildAfterPanoramaCanvas(img));
+      } catch (e) {
+        if (onError) onError(e);
+      }
+    };
+    img.onerror = function () { if (onError) onError(); };
+    img.src = url;
+  }
+
+  function buildAfterPanoramaCanvas(img) {
+    var canvas = document.createElement("canvas");
+    canvas.width = 2048;
+    canvas.height = 1024;
+    var ctx = canvas.getContext("2d");
+    var w = canvas.width;
+    var h = canvas.height;
+    var horizon = Math.round(h * 0.54);
+
+    var gradient = ctx.createLinearGradient(0, 0, 0, h);
+    gradient.addColorStop(0, "#343436");
+    gradient.addColorStop(0.5, "#252527");
+    gradient.addColorStop(1, "#141416");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.fillStyle = "rgba(160,150,132,0.28)";
+    ctx.fillRect(0, horizon, w, h - horizon);
+    ctx.strokeStyle = "rgba(212,197,169,0.45)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, horizon);
+    ctx.lineTo(w, horizon);
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(255,255,255,0.13)";
+    ctx.lineWidth = 1;
+    for (var x = -w / 4; x < w + w / 4; x += 160) {
+      ctx.beginPath();
+      ctx.moveTo(w / 2, horizon);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+    for (var y = horizon + 76; y < h; y += 86) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+
+    drawPanel(ctx, img, 180, 250, 450, 380, true, 0.56);
+    drawPanel(ctx, img, w - 630, 250, 450, 380, false, 0.56);
+    drawPanel(ctx, img, (w - 1030) / 2, 210, 1030, 590, false, 1);
+    return canvas;
+  }
+
+  function drawPanel(ctx, img, x, y, w, h, mirror, alpha) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    roundedClip(ctx, x, y, w, h, Math.max(16, Math.round(w * 0.025)));
+    if (mirror) {
+      ctx.translate(x + w, y);
+      ctx.scale(-1, 1);
+      drawCover(ctx, img, 0, 0, w, h);
+    } else {
+      drawCover(ctx, img, x, y, w, h);
+    }
+    ctx.restore();
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,255,255,0.16)";
+    ctx.lineWidth = 2;
+    roundedPath(ctx, x, y, w, h, Math.max(16, Math.round(w * 0.025)));
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawCover(ctx, img, x, y, w, h) {
+    var scale = Math.max(w / img.width, h / img.height);
+    var sw = w / scale;
+    var sh = h / scale;
+    var sx = (img.width - sw) / 2;
+    var sy = (img.height - sh) / 2;
+    ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+  }
+
+  function roundedClip(ctx, x, y, w, h, r) {
+    roundedPath(ctx, x, y, w, h, r);
+    ctx.clip();
+  }
+
+  function roundedPath(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
   // --- Fetch the tour -------------------------------------------------------
   function getQueryParam(name) {
     return new URLSearchParams(window.location.search).get(name);
@@ -137,21 +304,9 @@
   var tourId = getQueryParam("tour") || getQueryParam("tourId");
 
   if (tourId) {
-    fetch(API_BASE + "/tours/" + encodeURIComponent(tourId), {
-      headers: token ? { Authorization: "Bearer " + token } : {},
-    })
-      .then(function (r) {
-        if (!r.ok) throw new Error("tour fetch failed");
-        return r.json();
-      })
+    resolveTour(tourId)
       .then(function (data) {
-        var tour = data.tour || data;
-        if (tour && tour.pano_url) {
-          applyTexture(tour.pano_url);
-          populatePanels(tour);
-        } else {
-          makeDemoTexture();
-        }
+        loadTourTexture(data.tour || data);
       })
       .catch(function () {
         makeDemoTexture();
@@ -486,12 +641,34 @@
     function q(name) { return new URLSearchParams(location.search).get(name); }
     var tourId = q("tour") || q("tourId");
     if (tourId) {
-      fetch(apiBase + "/tours/" + encodeURIComponent(tourId), { headers: token ? { Authorization: "Bearer " + token } : {} })
-        .then(function (r) { if (!r.ok) throw new Error("tour"); return r.json(); })
-        .then(function (data) { loadImage((data.tour || data).pano_url); })
+      resolveTour(tourId)
+        .then(function (data) { loadFallbackTour(data.tour || data); })
         .catch(makeDemo);
     } else {
       makeDemo();
+    }
+
+    function loadFallbackTour(tour) {
+      var panoUrl = tourPanoUrl(tour);
+      var afterUrl = tourAfterUrl(tour);
+      if (shouldGenerateFromAfter(tour, panoUrl, afterUrl)) {
+        generatePanoramaFromAfter(afterUrl, function (canvas) {
+          try {
+            loadImage(canvas.toDataURL("image/png"));
+          } catch (e) {
+            if (panoUrl) loadImage(panoUrl);
+            else if (afterUrl) loadImage(afterUrl);
+            else makeDemo();
+          }
+        }, function () {
+          if (panoUrl) loadImage(panoUrl);
+          else makeDemo();
+        });
+      } else {
+        var url = panoUrl || afterUrl;
+        if (url) loadImage(url);
+        else makeDemo();
+      }
     }
 
     function loadImage(url) {
