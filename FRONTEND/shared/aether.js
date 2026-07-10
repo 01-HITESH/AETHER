@@ -18,7 +18,7 @@
   // ===========================================================================
   var APP_BASE = location.pathname.indexOf("/app/") === 0 ? "/app" : "";            // FRONTEND is mounted here by the backend
   var API_BASE = "/api";
-  var PAGE = "aether_authentication/code.html"; // overwritten below
+  var PAGE = "aether_authentication"; // overwritten below
   var DEMO_MODE = true;
   var DEMO_AFTER_IMAGES = {
     living_room: "https://images.unsplash.com/photo-1600210492493-0946911123ea?auto=format&fit=crop&w=1600&q=85",
@@ -32,15 +32,15 @@
   var DEMO_TOUR_ID = "demo-static-tour";
 
   function page(folder) {
-    if (location.protocol === "file:") return "../" + folder + "/code.html";
-    return APP_BASE ? APP_BASE + "/" + folder + "/code.html" : "/" + folder + "/code.html";
+    if (location.protocol === "file:") return "../pages/" + folder + ".html";
+    return APP_BASE ? APP_BASE + "/pages/" + folder + ".html" : "/pages/" + folder + ".html";
   }
 
-  function pagePath(folder) { return "/" + folder + "/code.html"; }
+  function pagePath(folder) { return "/pages/" + folder + ".html"; }
 
   // Resolve which design folder we are on from the path.
   (function detectPage() {
-    var m = location.pathname.match(/\/([a-z0-9_]+)\/code\.html/i);
+    var m = location.pathname.match(/\/pages\/([a-z0-9_]+)\.html/i);
     PAGE = m ? m[1] : "";
   })();
 
@@ -383,7 +383,7 @@
       var next = new URL(raw, location.origin);
       if (next.origin !== location.origin) return "";
       if (next.pathname.indexOf(pagePath("aether_authentication")) >= 0) return "";
-      if (next.pathname.indexOf("/aether_") !== 0) return "";
+      if (next.pathname.indexOf("/pages/") < 0) return "";
       return next.pathname + next.search + next.hash;
     } catch (e) {
       return "";

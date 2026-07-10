@@ -114,7 +114,7 @@ Open this URL in your browser:
 http://127.0.0.1:8000/app/
 ```
 
-Use `/app/` as the stable entry URL. Avoid bookmarking nested frontend HTML paths because page folder names can change between builds.
+Use `/app/` as the stable entry URL. The individual frontend screens now live in one `FRONTEND/pages/` folder, so the page paths are easier to browse and edit.
 
 The root URL redirects to the app:
 
@@ -160,6 +160,7 @@ pip install -r BACKEND\requirements.txt
 - `BACKEND/user_audit.py` - read-only utility for checking registered users, session counts, credential-hash metadata, account history, and saved design projects.
 - `BACKEND/requirements.txt` - Python dependency list.
 - `FRONTEND/` - static page mockups and app screens.
+- `FRONTEND/pages/` - all page HTML files collected into one folder for easier navigation and editing.
 - `FRONTEND/shared/aether.js` - shared frontend runtime for API calls, auth guards, navigation, profile settings, theme handling, and page wiring.
 - `FRONTEND/shared/pano-viewer.js` - interactive panorama viewer runtime.
 - `run.ps1` - Windows PowerShell launcher.
