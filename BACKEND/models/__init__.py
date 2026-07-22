@@ -1,2 +1,1 @@
-"""API request and response models."""
-
+"""Pydantic request and response models."""

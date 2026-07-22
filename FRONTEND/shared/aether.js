@@ -84,14 +84,12 @@
     setToken: function (t) { t ? localStorage.setItem("aether_token", t) : localStorage.removeItem("aether_token"); },
     setUser: function (u) { localStorage.setItem("aether_user", JSON.stringify(u || {})); if (u) syncSession(u); },
     getUser: function () { try { return JSON.parse(localStorage.getItem("aether_user") || "{}"); } catch (e) { return {}; } },
-    isAuthed: function () { return !!this.getToken(); },
+    isAuthed: function () { return !!(this.getUser() && this.getUser().id) || !!sessionStorage.getItem(SESSION_KEY) || !!this.getToken(); },
     isDemo: function () { return DEMO_MODE && this.getToken() === "demo-google-session"; },
 
     request: function (path, opts) {
       opts = opts || {};
       var headers = opts.headers || {};
-      var token = this.getToken();
-      if (token) headers["Authorization"] = "Bearer " + token;
       if (opts.json !== undefined) {
         headers["Content-Type"] = "application/json";
         opts.body = JSON.stringify(opts.json);
@@ -100,6 +98,7 @@
         method: opts.method || "GET",
         headers: headers,
         body: opts.body,
+        credentials: "same-origin",
       }).then(function (r) {
         return r.text().then(function (txt) {
           var data = {};
@@ -219,9 +218,24 @@
       return this.request("/tours/" + encodeURIComponent(id), { method: "DELETE" });
     },
     exportUrl: function (id, kind) {
-      var token = this.getToken();
-      var url = API_BASE + "/tours/" + encodeURIComponent(id) + "/export/" + encodeURIComponent(kind);
-      return token ? url + "?token=" + encodeURIComponent(token) : url;
+      return API_BASE + "/tours/" + encodeURIComponent(id) + "/export/" + encodeURIComponent(kind);
+    },
+    downloadExport: function (id, kind, filename) {
+      var url = this.exportUrl(id, kind);
+      return fetch(url, { credentials: "same-origin" })
+        .then(function (res) {
+          if (!res.ok) throw new Error("Export download failed (" + res.status + ")");
+          return res.blob();
+        })
+        .then(function (blob) {
+          var a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = filename || (id + "-" + kind);
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+        });
     },
   };
   window.AetherAPI = AetherAPI;

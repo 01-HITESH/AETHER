@@ -7,10 +7,26 @@ import secrets
 import struct
 import threading
 import time
+from collections import defaultdict, deque
 from dataclasses import dataclass
 
-from argon2 import PasswordHasher
-from argon2.exceptions import InvalidHashError, VerifyMismatchError
+try:
+    from cryptography.fernet import Fernet, InvalidToken
+except ImportError:  # pragma: no cover - exercised only before dependencies are installed.
+    Fernet = None
+    InvalidToken = ValueError
+
+try:
+    from argon2 import PasswordHasher as Argon2Hasher
+    from argon2.exceptions import InvalidHashError, VerifyMismatchError
+except ImportError:  # pragma: no cover - exercised only before dependencies are installed.
+    Argon2Hasher = None
+    InvalidHashError = ValueError
+    VerifyMismatchError = ValueError
+
+
+PBKDF2_ITERATIONS = 600_000
+LEGACY_PBKDF2_ITERATIONS = 180_000
 
 
 def token_hash(token: str) -> str:
@@ -23,16 +39,76 @@ def new_id(prefix: str) -> str:
 
 class PasswordService:
     def __init__(self) -> None:
-        self.hasher = PasswordHasher(time_cost=3, memory_cost=65536, parallelism=4)
+        self._argon = (
+            Argon2Hasher(time_cost=3, memory_cost=65536, parallelism=2, hash_len=32, salt_len=16)
+            if Argon2Hasher
+            else None
+        )
 
     def hash(self, password: str) -> str:
-        return self.hasher.hash(password)
+        if self._argon:
+            return self._argon.hash(password)
+        salt = secrets.token_hex(16)
+        digest = hashlib.pbkdf2_hmac(
+            "sha256", password.encode("utf-8"), salt.encode("ascii"), PBKDF2_ITERATIONS
+        )
+        return f"pbkdf2_sha256${PBKDF2_ITERATIONS}${salt}${base64.b64encode(digest).decode('ascii')}"
 
-    def verify(self, encoded: str, password: str) -> bool:
+    def verify(self, password: str, encoded: str, legacy_salt: str = "") -> bool:
+        if encoded.startswith("$argon2") and self._argon:
+            try:
+                return self._argon.verify(encoded, password)
+            except (VerifyMismatchError, InvalidHashError):
+                return False
+        if encoded.startswith("pbkdf2_sha256$"):
+            try:
+                _, raw_iterations, salt, expected = encoded.split("$", 3)
+                iterations = int(raw_iterations)
+            except (ValueError, TypeError):
+                return False
+            actual = hashlib.pbkdf2_hmac(
+                "sha256", password.encode("utf-8"), salt.encode("ascii"), iterations
+            )
+            return hmac.compare_digest(base64.b64encode(actual).decode("ascii"), expected)
+        if legacy_salt:
+            actual = hashlib.pbkdf2_hmac(
+                "sha256",
+                password.encode("utf-8"),
+                legacy_salt.encode("utf-8"),
+                LEGACY_PBKDF2_ITERATIONS,
+            )
+            return hmac.compare_digest(base64.b64encode(actual).decode("ascii"), encoded)
+        return False
+
+    def needs_rehash(self, encoded: str) -> bool:
+        if encoded.startswith("$argon2") and self._argon:
+            return self._argon.check_needs_rehash(encoded)
+        return True
+
+
+class SecretCipher:
+    def __init__(self, secret_key: str):
+        key = base64.urlsafe_b64encode(hashlib.sha256(secret_key.encode("utf-8")).digest())
+        self._fernet = Fernet(key) if Fernet else None
+
+    def encrypt(self, value: str) -> str:
+        if not value:
+            return ""
+        if not self._fernet:
+            return value
+        return "fernet:" + self._fernet.encrypt(value.encode("utf-8")).decode("ascii")
+
+    def decrypt(self, value: str) -> str:
+        if not value:
+            return ""
+        if not value.startswith("fernet:"):
+            return value
+        if not self._fernet:
+            return ""
         try:
-            return self.hasher.verify(encoded, password)
-        except (VerifyMismatchError, InvalidHashError):
-            return False
+            return self._fernet.decrypt(value[7:].encode("ascii")).decode("utf-8")
+        except InvalidToken:
+            return ""
 
 
 def generate_totp_secret() -> str:
@@ -40,21 +116,28 @@ def generate_totp_secret() -> str:
 
 
 def totp_code(secret: str, at_time: int | None = None, period: int = 30) -> str:
-    padding = "=" * ((8 - len(secret) % 8) % 8)
-    key = base64.b32decode(secret.upper() + padding)
-    counter = int((at_time or int(time.time())) / period)
+    timestamp = int(at_time if at_time is not None else time.time())
+    counter = timestamp // period
+    padded = secret.upper() + "=" * ((8 - len(secret) % 8) % 8)
+    key = base64.b32decode(padded)
     digest = hmac.new(key, struct.pack(">Q", counter), hashlib.sha1).digest()
-    offset = digest[-1] & 15
-    number = (struct.unpack(">I", digest[offset : offset + 4])[0] & 0x7FFFFFFF) % 1_000_000
-    return f"{number:06d}"
+    offset = digest[-1] & 0x0F
+    value = (struct.unpack(">I", digest[offset : offset + 4])[0] & 0x7FFFFFFF) % 1_000_000
+    return f"{value:06d}"
 
 
 def verify_totp(secret: str, code: str, window: int = 1) -> bool:
+    normalized = "".join(ch for ch in code if ch.isdigit())
+    if len(normalized) != 6:
+        return False
     now = int(time.time())
-    return any(hmac.compare_digest(totp_code(secret, now + offset * 30), code.strip()) for offset in range(-window, window + 1))
+    return any(
+        hmac.compare_digest(totp_code(secret, now + offset * 30), normalized)
+        for offset in range(-window, window + 1)
+    )
 
 
-@dataclass(frozen=True)
+@dataclass
 class Limit:
     requests: int
     window_seconds: int
@@ -63,19 +146,19 @@ class Limit:
 class RateLimiter:
     def __init__(self, enabled: bool = True):
         self.enabled = enabled
-        self._events: dict[str, list[float]] = {}
+        self._events: dict[str, deque[float]] = defaultdict(deque)
         self._lock = threading.Lock()
 
-    def check(self, key: str, limit: Limit) -> bool:
+    def check(self, key: str, limit: Limit) -> int:
         if not self.enabled:
-            return True
-        cutoff = time.monotonic() - limit.window_seconds
+            return 0
+        now = time.monotonic()
+        cutoff = now - limit.window_seconds
         with self._lock:
-            events = [value for value in self._events.get(key, []) if value >= cutoff]
+            events = self._events[key]
+            while events and events[0] <= cutoff:
+                events.popleft()
             if len(events) >= limit.requests:
-                self._events[key] = events
-                return False
-            events.append(time.monotonic())
-            self._events[key] = events
-            return True
-
+                return max(1, int(limit.window_seconds - (now - events[0])))
+            events.append(now)
+        return 0

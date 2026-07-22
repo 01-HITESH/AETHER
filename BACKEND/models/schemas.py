@@ -1,24 +1,28 @@
 from __future__ import annotations
 
-from typing import Any, Annotated
+from typing import Any, Literal
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 
 class LoginPayload(BaseModel):
-    email: EmailStr
+    email: str
     password: str
     otp: str = ""
 
 
+class GoogleAuthPayload(BaseModel):
+    credential: str
+
+
 class RegisterPayload(BaseModel):
     name: str = Field(default="Designer", max_length=80)
-    email: EmailStr
+    email: str
     password: str
 
 
 class PasswordResetRequestPayload(BaseModel):
-    email: EmailStr
+    email: str
 
 
 class PasswordResetConfirmPayload(BaseModel):
@@ -41,6 +45,10 @@ class TwoFactorVerifyPayload(BaseModel):
     code: str
 
 
+class UploadFromUrlPayload(BaseModel):
+    url: str
+
+
 class GenerationJobCreatePayload(BaseModel):
     uploadId: str
     roomType: str = "living_room"
@@ -50,16 +58,18 @@ class GenerationJobCreatePayload(BaseModel):
     negativePrompt: str = ""
     provider: str = ""
     model: str = ""
-    variantCount: Annotated[int, Field(ge=1, le=4)] = 4
+    variantCount: int = Field(default=4, ge=1, le=4)
     settings: dict[str, Any] = Field(default_factory=dict)
     seeds: list[int] = Field(default_factory=list)
 
 
 class ShareCreatePayload(BaseModel):
-    expiresHours: Annotated[int, Field(ge=1, le=720)] = 72
+    expiresHours: int = Field(default=72, ge=1, le=24 * 30)
     password: str = Field(default="", max_length=128)
 
 
 class ShareUnlockPayload(BaseModel):
     password: str = ""
 
+
+JobState = Literal["queued", "running", "completed", "failed", "cancelled"]

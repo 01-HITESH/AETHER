@@ -2,80 +2,112 @@ from __future__ import annotations
 
 import json
 import time
-import urllib.parse
-import urllib.request
-import uuid
 from pathlib import Path
+from typing import Any
 
-from .base import CancelCallback, GenerationProvider, GenerationRequest, GenerationResult, ProgressCallback
+import httpx
+
+from .base import GenerationProvider, GenerationRequest, GenerationResult, ProviderError
 
 
 class ComfyUIProvider(GenerationProvider):
     name = "comfyui"
+    display_name = "ComfyUI"
 
     def __init__(self, base_url: str, workflow_path: str):
         self.base_url = base_url.rstrip("/")
-        self.workflow_path = workflow_path
+        self.workflow_path = Path(workflow_path).expanduser() if workflow_path else None
 
-    def _json(self, path: str, payload: dict | None = None) -> dict:
-        data = json.dumps(payload).encode() if payload is not None else None
-        request = urllib.request.Request(
-            self.base_url + path,
-            data=data,
-            headers={"Content-Type": "application/json"},
-            method="POST" if data is not None else "GET",
-        )
-        with urllib.request.urlopen(request, timeout=60) as response:
-            return json.loads(response.read())
+    def generate(self, request, progress, cancelled) -> GenerationResult:
+        if not self.workflow_path or not self.workflow_path.is_file():
+            raise ProviderError(
+                "COMFYUI_WORKFLOW_PATH must point to an API-format ComfyUI workflow JSON file."
+            )
+        self.ensure_not_cancelled(cancelled)
+        progress(5, "Uploading source image to ComfyUI")
+        with httpx.Client(timeout=httpx.Timeout(60.0, read=120.0)) as client:
+            with request.source_path.open("rb") as handle:
+                upload = client.post(
+                    f"{self.base_url}/upload/image",
+                    files={"image": (request.source_path.name, handle, "image/jpeg")},
+                    data={"overwrite": "true"},
+                )
+            upload.raise_for_status()
+            uploaded_name = upload.json().get("name") or request.source_path.name
 
-    def generate(
-        self,
-        request: GenerationRequest,
-        progress: ProgressCallback,
-        cancelled: CancelCallback,
-    ) -> GenerationResult:
-        workflow_file = Path(self.workflow_path)
-        if not workflow_file.is_file():
-            raise RuntimeError("AETHER_COMFYUI_WORKFLOW must point to a valid API workflow JSON file.")
-        workflow = json.loads(workflow_file.read_text(encoding="utf-8"))
-        serialized = json.dumps(workflow)
-        serialized = serialized.replace("{{PROMPT}}", request.prompt)
-        serialized = serialized.replace("{{NEGATIVE_PROMPT}}", request.negative_prompt)
-        serialized = serialized.replace("{{SEED}}", str(request.seed))
-        workflow = json.loads(serialized)
-        client_id = uuid.uuid4().hex
-        queued = self._json("/prompt", {"prompt": workflow, "client_id": client_id})
-        prompt_id = queued.get("prompt_id")
-        if not prompt_id:
-            raise RuntimeError("ComfyUI did not return a prompt id.")
-        progress(10)
-        for tick in range(240):
-            if cancelled():
-                try:
-                    self._json("/interrupt", {})
-                finally:
-                    raise RuntimeError("Generation cancelled.")
-            history = self._json("/history/" + urllib.parse.quote(prompt_id))
-            item = history.get(prompt_id)
-            if item:
-                outputs = item.get("outputs", {})
-                for output in outputs.values():
-                    images = output.get("images", [])
-                    if not images:
-                        continue
-                    image = images[0]
-                    query = urllib.parse.urlencode(
-                        {"filename": image["filename"], "subfolder": image.get("subfolder", ""), "type": image.get("type", "output")}
-                    )
-                    with urllib.request.urlopen(self.base_url + "/view?" + query, timeout=60) as response:
+            workflow = json.loads(self.workflow_path.read_text(encoding="utf-8"))
+            replacements = {
+                "${PROMPT}": request.prompt,
+                "${NEGATIVE_PROMPT}": request.negative_prompt,
+                "${SEED}": request.seed,
+                "${MODEL}": request.model,
+                "${INPUT_IMAGE}": uploaded_name,
+            }
+            workflow = _replace_values(workflow, replacements)
+            progress(12, "Submitting ComfyUI workflow")
+            response = client.post(f"{self.base_url}/prompt", json={"prompt": workflow})
+            response.raise_for_status()
+            prompt_id = response.json().get("prompt_id")
+            if not prompt_id:
+                raise ProviderError("ComfyUI did not return a prompt_id.")
+
+            started = time.monotonic()
+            while True:
+                self.ensure_not_cancelled(cancelled)
+                history_response = client.get(f"{self.base_url}/history/{prompt_id}")
+                history_response.raise_for_status()
+                history = history_response.json().get(prompt_id)
+                if history:
+                    output = _first_image(history)
+                    if output:
+                        progress(92, "Downloading ComfyUI result")
+                        image_response = client.get(
+                            f"{self.base_url}/view",
+                            params={
+                                "filename": output["filename"],
+                                "subfolder": output.get("subfolder", ""),
+                                "type": output.get("type", "output"),
+                            },
+                        )
+                        image_response.raise_for_status()
                         request.output_path.parent.mkdir(parents=True, exist_ok=True)
-                        request.output_path.write_bytes(response.read())
-                    progress(100)
-                    return GenerationResult(request.output_path, {"provider": self.name, "promptId": prompt_id})
-                status = item.get("status", {})
-                if status.get("status_str") == "error":
-                    raise RuntimeError("ComfyUI reported a generation error.")
-            progress(min(92, 10 + tick // 3))
-            time.sleep(0.5)
-        raise RuntimeError("ComfyUI generation timed out.")
+                        request.output_path.write_bytes(image_response.content)
+                        progress(100, "Alternative ready")
+                        return GenerationResult(
+                            image_path=request.output_path,
+                            metadata={
+                                "provider": self.name,
+                                "prompt_id": prompt_id,
+                                "output": output,
+                                "elapsed_seconds": round(time.monotonic() - started, 2),
+                            },
+                        )
+                    status = history.get("status", {})
+                    if status.get("status_str") == "error":
+                        raise ProviderError(f"ComfyUI workflow failed: {status}")
+                elapsed = time.monotonic() - started
+                progress(min(88, 15 + int(elapsed / 2)), "ComfyUI inference running")
+                time.sleep(1)
 
+
+def _replace_values(value: Any, replacements: dict[str, Any]) -> Any:
+    if isinstance(value, dict):
+        return {key: _replace_values(item, replacements) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_replace_values(item, replacements) for item in value]
+    if isinstance(value, str):
+        if value in replacements:
+            return replacements[value]
+        result = value
+        for placeholder, replacement in replacements.items():
+            result = result.replace(placeholder, str(replacement))
+        return result
+    return value
+
+
+def _first_image(history: dict[str, Any]) -> dict[str, Any] | None:
+    for node in (history.get("outputs") or {}).values():
+        images = node.get("images") or []
+        if images:
+            return images[0]
+    return None

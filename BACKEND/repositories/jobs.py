@@ -5,65 +5,177 @@ import sqlite3
 from typing import Any
 
 from ..database import Database, utc_now
+from .users import safe_json
 
 
 class JobsRepository:
     def __init__(self, database: Database):
         self.database = database
 
-    def get(self, job_id: str, user_id: str | None = None) -> sqlite3.Row | None:
-        sql = "SELECT * FROM jobs WHERE id = ?"
-        args: tuple[Any, ...] = (job_id,)
-        if user_id:
-            sql += " AND user_id = ?"
-            args += (user_id,)
-        with self.database.connection() as conn:
-            return conn.execute(sql, args).fetchone()
+    def create(self, values: dict[str, Any]) -> sqlite3.Row:
+        now = utc_now()
+        with self.database.connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO generation_jobs (
+                    id, user_id, upload_id, state, progress, room_type, style, prompt,
+                    negative_prompt, provider, model, variant_count, settings_json,
+                    requirements_json, seeds_json, result_tour_ids_json, error, attempts,
+                    cancel_requested, created_at, updated_at
+                )
+                VALUES (?, ?, ?, 'queued', 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '[]', '', 0, 0, ?, ?)
+                """,
+                (
+                    values["id"],
+                    values["user_id"],
+                    values["upload_id"],
+                    values["room_type"],
+                    values["style"],
+                    values["prompt"],
+                    values["negative_prompt"],
+                    values["provider"],
+                    values["model"],
+                    values["variant_count"],
+                    safe_json(values["settings"]),
+                    safe_json(values["requirements"]),
+                    safe_json(values["seeds"]),
+                    now,
+                    now,
+                ),
+            )
+            return conn.execute("SELECT * FROM generation_jobs WHERE id = ?", (values["id"],)).fetchone()
 
-    def list_for_user(self, user_id: str) -> list[sqlite3.Row]:
-        with self.database.connection() as conn:
-            return conn.execute("SELECT * FROM jobs WHERE user_id=? ORDER BY created_at DESC", (user_id,)).fetchall()
+    def get(self, job_id: str, user_id: str | None = None) -> sqlite3.Row | None:
+        with self.database.connect() as conn:
+            if user_id:
+                return conn.execute(
+                    "SELECT * FROM generation_jobs WHERE id = ? AND user_id = ?",
+                    (job_id, user_id),
+                ).fetchone()
+            return conn.execute("SELECT * FROM generation_jobs WHERE id = ?", (job_id,)).fetchone()
+
+    def list_for_user(self, user_id: str, limit: int = 20) -> list[sqlite3.Row]:
+        with self.database.connect() as conn:
+            return list(
+                conn.execute(
+                    "SELECT * FROM generation_jobs WHERE user_id = ? ORDER BY created_at DESC LIMIT ?",
+                    (user_id, limit),
+                ).fetchall()
+            )
 
     def claim_next(self) -> sqlite3.Row | None:
-        with self.database.connection() as conn:
-            row = conn.execute("SELECT * FROM jobs WHERE status='queued' ORDER BY created_at LIMIT 1").fetchone()
+        with self.database.connect() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute(
+                """
+                SELECT * FROM generation_jobs
+                WHERE state = 'queued' AND cancel_requested = 0
+                ORDER BY created_at ASC
+                LIMIT 1
+                """
+            ).fetchone()
             if not row:
                 return None
-            conn.execute("UPDATE jobs SET status='running', progress=1, started_at=?, attempts=attempts+1 WHERE id=?", (utc_now(), row["id"]))
-            return conn.execute("SELECT * FROM jobs WHERE id=?", (row["id"],)).fetchone()
+            now = utc_now()
+            updated = conn.execute(
+                """
+                UPDATE generation_jobs
+                SET state = 'running', started_at = CASE WHEN started_at = '' THEN ? ELSE started_at END,
+                    updated_at = ?, attempts = attempts + 1
+                WHERE id = ? AND state = 'queued'
+                """,
+                (now, now, row["id"]),
+            )
+            if updated.rowcount != 1:
+                return None
+            return conn.execute("SELECT * FROM generation_jobs WHERE id = ?", (row["id"],)).fetchone()
 
-    def update(self, job_id: str, **values: Any) -> None:
-        if not values:
-            return
-        columns = ", ".join(f"{key}=?" for key in values)
-        with self.database.connection() as conn:
-            conn.execute(f"UPDATE jobs SET {columns} WHERE id=?", (*values.values(), job_id))
+    def update_progress(self, job_id: str, progress: int) -> None:
+        with self.database.connect() as conn:
+            conn.execute(
+                "UPDATE generation_jobs SET progress = ?, updated_at = ? WHERE id = ? AND state = 'running'",
+                (min(99, max(1, int(progress))), utc_now(), job_id),
+            )
+
+    def add_result(self, job_id: str, tour_id: str, progress: int) -> None:
+        with self.database.connect() as conn:
+            row = conn.execute(
+                "SELECT result_tour_ids_json FROM generation_jobs WHERE id = ?", (job_id,)
+            ).fetchone()
+            result_ids = json.loads(row["result_tour_ids_json"] or "[]")
+            if tour_id not in result_ids:
+                result_ids.append(tour_id)
+            conn.execute(
+                """
+                UPDATE generation_jobs
+                SET result_tour_ids_json = ?, progress = ?, updated_at = ?
+                WHERE id = ?
+                """,
+                (safe_json(result_ids), min(99, max(1, progress)), utc_now(), job_id),
+            )
+
+    def complete(self, job_id: str) -> None:
+        now = utc_now()
+        with self.database.connect() as conn:
+            conn.execute(
+                """
+                UPDATE generation_jobs
+                SET state = 'completed', progress = 100, error = '', completed_at = ?, updated_at = ?
+                WHERE id = ?
+                """,
+                (now, now, job_id),
+            )
+
+    def fail(self, job_id: str, error: str) -> None:
+        with self.database.connect() as conn:
+            conn.execute(
+                """
+                UPDATE generation_jobs
+                SET state = 'failed', error = ?, updated_at = ?
+                WHERE id = ?
+                """,
+                (error[:1000], utc_now(), job_id),
+            )
 
     def cancel(self, job_id: str, user_id: str) -> sqlite3.Row | None:
-        row = self.get(job_id, user_id)
-        if not row or row["status"] in {"completed", "failed", "cancelled"}:
-            return row
-        values = {"cancel_requested": 1}
-        if row["status"] == "queued":
-            values.update(status="cancelled", completed_at=utc_now())
-        self.update(job_id, **values)
-        return self.get(job_id, user_id)
+        with self.database.connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM generation_jobs WHERE id = ? AND user_id = ?", (job_id, user_id)
+            ).fetchone()
+            if not row:
+                return None
+            state = "cancelled" if row["state"] == "queued" else row["state"]
+            conn.execute(
+                """
+                UPDATE generation_jobs
+                SET cancel_requested = 1, state = ?, updated_at = ? WHERE id = ? AND user_id = ?
+                """,
+                (state, utc_now(), job_id, user_id),
+            )
+            return conn.execute("SELECT * FROM generation_jobs WHERE id = ?", (job_id,)).fetchone()
+
+    def mark_cancelled(self, job_id: str) -> None:
+        with self.database.connect() as conn:
+            conn.execute(
+                "UPDATE generation_jobs SET state = 'cancelled', updated_at = ? WHERE id = ?",
+                (utc_now(), job_id),
+            )
 
     def retry(self, job_id: str, user_id: str) -> sqlite3.Row | None:
-        row = self.get(job_id, user_id)
-        if not row or row["status"] not in {"failed", "cancelled"}:
-            return row
-        self.update(job_id, status="queued", progress=0, error=None, cancel_requested=0, started_at=None, completed_at=None)
-        return self.get(job_id, user_id)
-
-
-def job_to_dict(row: sqlite3.Row, tours: list[dict] | None = None) -> dict[str, Any]:
-    return {
-        "id": row["id"], "status": row["status"], "progress": row["progress"], "error": row["error"],
-        "provider": row["provider"], "model": row["model"], "prompt": row["prompt"],
-        "negativePrompt": row["negative_prompt"], "settings": json.loads(row["settings_json"]),
-        "seeds": json.loads(row["seeds_json"]), "variantCount": row["variant_count"],
-        "attempts": row["attempts"], "createdAt": row["created_at"], "startedAt": row["started_at"],
-        "completedAt": row["completed_at"], "results": tours or [],
-    }
-
+        with self.database.connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM generation_jobs WHERE id = ? AND user_id = ?", (job_id, user_id)
+            ).fetchone()
+            if not row or row["state"] not in {"failed", "cancelled"}:
+                return None
+            progress = int(len(json.loads(row["result_tour_ids_json"] or "[]")) / row["variant_count"] * 100)
+            conn.execute(
+                """
+                UPDATE generation_jobs
+                SET state = 'queued', progress = ?, error = '', cancel_requested = 0,
+                    completed_at = '', updated_at = ?
+                WHERE id = ? AND user_id = ?
+                """,
+                (progress, utc_now(), job_id, user_id),
+            )
+            return conn.execute("SELECT * FROM generation_jobs WHERE id = ?", (job_id,)).fetchone()

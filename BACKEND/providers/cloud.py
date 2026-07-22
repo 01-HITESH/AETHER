@@ -1,56 +1,61 @@
 from __future__ import annotations
 
 import base64
-import json
-import urllib.request
 
-from .base import CancelCallback, GenerationProvider, GenerationRequest, GenerationResult, ProgressCallback
+import httpx
+
+from .base import GenerationProvider, GenerationRequest, GenerationResult, ProviderError
 
 
 class CloudProvider(GenerationProvider):
-    """Generic JSON image-to-image adapter for a configured HTTPS endpoint."""
-
     name = "cloud"
+    display_name = "Cloud image provider"
 
     def __init__(self, endpoint: str, api_key: str):
         self.endpoint = endpoint
         self.api_key = api_key
 
-    def generate(
-        self,
-        request: GenerationRequest,
-        progress: ProgressCallback,
-        cancelled: CancelCallback,
-    ) -> GenerationResult:
-        if not self.endpoint or not self.api_key:
-            raise RuntimeError("Cloud generation requires AETHER_CLOUD_GENERATION_URL and API key.")
-        if not self.endpoint.lower().startswith("https://"):
-            raise RuntimeError("Cloud generation endpoint must use HTTPS.")
-        progress(8)
+    def generate(self, request, progress, cancelled) -> GenerationResult:
+        if not self.endpoint:
+            raise ProviderError("AETHER_CLOUD_GENERATION_URL is not configured.")
+        self.ensure_not_cancelled(cancelled)
+        progress(8, "Preparing cloud inference request")
         payload = {
+            "image_base64": base64.b64encode(request.source_path.read_bytes()).decode("ascii"),
             "prompt": request.prompt,
             "negative_prompt": request.negative_prompt,
             "seed": request.seed,
             "model": request.model,
             "settings": request.settings,
-            "image": base64.b64encode(request.source_path.read_bytes()).decode("ascii"),
+            "variant_index": request.variant_index,
         }
-        req = urllib.request.Request(
-            self.endpoint,
-            data=json.dumps(payload).encode(),
-            headers={"Authorization": "Bearer " + self.api_key, "Content-Type": "application/json"},
-            method="POST",
-        )
-        if cancelled():
-            raise RuntimeError("Generation cancelled.")
-        progress(20)
-        with urllib.request.urlopen(req, timeout=300) as response:
-            result = json.loads(response.read())
-        encoded = result.get("image") or result.get("image_base64")
-        if not encoded:
-            raise RuntimeError("Cloud provider response did not contain an image.")
+        headers = {"Accept": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        progress(15, "Cloud inference running")
+        with httpx.Client(timeout=httpx.Timeout(60.0, read=600.0)) as client:
+            response = client.post(self.endpoint, json=payload, headers=headers)
+            response.raise_for_status()
+            result = response.json()
+            self.ensure_not_cancelled(cancelled)
+            progress(90, "Downloading cloud result")
+            if result.get("image_base64"):
+                image_bytes = base64.b64decode(result["image_base64"])
+            elif result.get("image_url"):
+                image_response = client.get(result["image_url"])
+                image_response.raise_for_status()
+                image_bytes = image_response.content
+            else:
+                raise ProviderError("Cloud provider response must include image_base64 or image_url.")
         request.output_path.parent.mkdir(parents=True, exist_ok=True)
-        request.output_path.write_bytes(base64.b64decode(encoded))
-        progress(100)
-        return GenerationResult(request.output_path, {"provider": self.name, **result.get("metadata", {})})
-
+        request.output_path.write_bytes(image_bytes)
+        progress(100, "Alternative ready")
+        metadata = result.get("metadata") if isinstance(result.get("metadata"), dict) else {}
+        return GenerationResult(
+            image_path=request.output_path,
+            metadata={
+                **metadata,
+                "provider": self.name,
+                "request_id": result.get("request_id", ""),
+            },
+        )

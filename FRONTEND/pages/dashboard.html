@@ -4,101 +4,6 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>AETHER - AI Architectural Design Dashboard</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                            "tertiary": "#c6c6c8",
-                            "on-primary-fixed": "#1c1b1b",
-                            "primary-fixed-dim": "#c8c6c5",
-                            "on-secondary": "#382f1c",
-                            "on-background": "#e4e2e4",
-                            "on-primary-fixed-variant": "#474646",
-                            "background": "#131315",
-                            "primary": "#c8c6c5",
-                            "on-tertiary-container": "#7c7d7f",
-                            "on-surface-variant": "#c4c7c7",
-                            "tertiary-fixed-dim": "#c6c6c8",
-                            "inverse-surface": "#e4e2e4",
-                            "tertiary-fixed": "#e2e2e4",
-                            "outline-variant": "#444748",
-                            "surface-container": "#1f1f21",
-                            "surface-variant": "#353437",
-                            "surface-container-lowest": "#0e0e10",
-                            "surface-container-low": "#1b1b1d",
-                            "on-error-container": "#ffdad6",
-                            "on-primary": "#313030",
-                            "on-secondary-fixed-variant": "#504630",
-                            "on-secondary-fixed": "#221b09",
-                            "outline": "#8e9192",
-                            "inverse-on-surface": "#303032",
-                            "surface-tint": "#c8c6c5",
-                            "error": "#ffb4ab",
-                            "on-tertiary-fixed": "#1a1c1d",
-                            "primary-container": "#121212",
-                            "secondary-fixed": "#f1e1c4",
-                            "on-secondary-container": "#c2b498",
-                            "surface": "#131315",
-                            "on-primary-container": "#7e7d7d",
-                            "surface-container-high": "#2a2a2c",
-                            "secondary-container": "#504630",
-                            "inverse-primary": "#5f5e5e",
-                            "surface-dim": "#131315",
-                            "surface-container-highest": "#353437",
-                            "primary-fixed": "#e5e2e1",
-                            "on-error": "#690005",
-                            "tertiary-container": "#101214",
-                            "secondary": "#d4c5a9",
-                            "on-tertiary": "#2f3132",
-                            "on-surface": "#e4e2e4",
-                            "on-tertiary-fixed-variant": "#454749",
-                            "surface-bright": "#39393b",
-                            "secondary-fixed-dim": "#d4c5a9",
-                            "error-container": "#93000a"
-                    },
-                    "borderRadius": {
-                            "DEFAULT": "0.25rem",
-                            "lg": "0.5rem",
-                            "xl": "0.75rem",
-                            "full": "9999px"
-                    },
-                    "spacing": {
-                            "container-max": "1440px",
-                            "unit": "8px",
-                            "margin-desktop": "64px",
-                            "gutter": "24px",
-                            "margin-mobile": "20px"
-                    },
-                    "fontFamily": {
-                            "label-caps": ["Inter"],
-                            "headline-sm": ["Inter"],
-                            "display-lg": ["Inter"],
-                            "label-sm": ["Inter"],
-                            "body-lg": ["Inter"],
-                            "body-md": ["Inter"],
-                            "display-lg-mobile": ["Inter"],
-                            "headline-md": ["Inter"]
-                    },
-                    "fontSize": {
-                            "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600"}],
-                            "headline-sm": ["24px", {"lineHeight": "32px", "letterSpacing": "0.01em", "fontWeight": "500"}],
-                            "display-lg": ["64px", {"lineHeight": "72px", "letterSpacing": "0.05em", "fontWeight": "600"}],
-                            "label-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
-                            "body-lg": ["18px", {"lineHeight": "28px", "letterSpacing": "0em", "fontWeight": "400"}],
-                            "body-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400"}],
-                            "display-lg-mobile": ["40px", {"lineHeight": "48px", "letterSpacing": "0.02em", "fontWeight": "600"}],
-                            "headline-md": ["32px", {"lineHeight": "40px", "letterSpacing": "0.02em", "fontWeight": "500"}]
-                    }
-                }
-            }
-        }
-    </script>
 <style>
         body { background-color: #121212; color: #e4e2e4; }
         .glass-panel {
@@ -129,6 +34,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
     </style>
+  <link rel="stylesheet" href="../styles/tailwind-compiled.css" />
 </head>
 <body class="bg-background text-on-background font-body-md min-h-screen flex selection:bg-secondary/30 selection:text-secondary">
 <!-- SideNavBar -->

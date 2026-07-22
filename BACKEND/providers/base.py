@@ -5,11 +5,20 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
 
-ProgressCallback = Callable[[int], None]
-CancelCallback = Callable[[], bool]
+
+ProgressCallback = Callable[[int, str], None]
+CancellationCheck = Callable[[], bool]
 
 
-@dataclass
+class ProviderError(RuntimeError):
+    pass
+
+
+class GenerationCancelled(RuntimeError):
+    pass
+
+
+@dataclass(frozen=True)
 class GenerationRequest:
     source_path: Path
     output_path: Path
@@ -21,21 +30,26 @@ class GenerationRequest:
     variant_index: int = 0
 
 
-@dataclass
+@dataclass(frozen=True)
 class GenerationResult:
     image_path: Path
     metadata: dict[str, Any]
 
 
 class GenerationProvider(ABC):
-    name = "base"
+    name: str
+    display_name: str
 
     @abstractmethod
     def generate(
         self,
         request: GenerationRequest,
         progress: ProgressCallback,
-        cancelled: CancelCallback,
+        cancelled: CancellationCheck,
     ) -> GenerationResult:
         raise NotImplementedError
 
+    @staticmethod
+    def ensure_not_cancelled(cancelled: CancellationCheck) -> None:
+        if cancelled():
+            raise GenerationCancelled("Generation was cancelled.")
