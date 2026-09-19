@@ -173,7 +173,7 @@
   function loadTourTexture(tour) {
     var panoUrl = tourPanoUrl(tour);
     var afterUrl = tourAfterUrl(tour);
-    if (shouldGenerateFromAfter(tour, panoUrl, afterUrl)) {
+    if (afterUrl) {
       showError("Generating 360 view from after image...");
       generatePanoramaFromAfter(afterUrl, applyCanvasTexture, function () {
         if (panoUrl) applyTexture(panoUrl);

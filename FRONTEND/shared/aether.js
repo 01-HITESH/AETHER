@@ -20,15 +20,18 @@
   var API_BASE = "/api";
   var PAGE = "aether_authentication"; // overwritten below
   var DEMO_MODE = true;
+  var IMAGE_BASE = location.protocol === "file:"
+    ? "../assets/"
+    : (APP_BASE ? APP_BASE + "/assets/" : "/assets/");
   var DEMO_AFTER_IMAGES = {
-    living_room: "https://images.unsplash.com/photo-1600210492493-0946911123ea?auto=format&fit=crop&w=1600&q=85",
-    bedroom: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1600&q=85",
-    kitchen: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1600&q=85",
-    bathroom: "https://images.unsplash.com/photo-1620626011761-996317b8d101?auto=format&fit=crop&w=1600&q=85",
-    office: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1600&q=85",
-    hall: "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=1600&q=85",
+    living_room: IMAGE_BASE + "living-room.jpg",
+    bedroom: IMAGE_BASE + "bedroom.jpg",
+    kitchen: IMAGE_BASE + "kitchen.jpg",
+    bathroom: IMAGE_BASE + "bathroom.jpg",
+    office: IMAGE_BASE + "office.jpg",
+    hall: IMAGE_BASE + "living-room.jpg",
   };
-  var DEMO_BEFORE_IMAGE = "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=85";
+  var DEMO_BEFORE_IMAGE = IMAGE_BASE + "room-before.jpg";
   var DEMO_TOUR_ID = "demo-static-tour";
 
   function page(folder) {
@@ -40,8 +43,24 @@
 
   // Resolve which design folder we are on from the path.
   (function detectPage() {
-    var m = location.pathname.match(/\/pages\/([a-z0-9_]+)\.html/i);
-    PAGE = m ? m[1] : "";
+    var m = location.pathname.match(/\/pages\/([^/]+)\.html/i);
+    var filename = m ? decodeURIComponent(m[1]).toLowerCase() : "";
+    var pageAliases = {
+      "explore results": "aether_explore_results",
+      "explore results interactive": "aether_explore_results_interactive",
+      "dashboard": "aether_dashboard",
+      "authentication": "aether_authentication",
+      "uploadroom": "aether_upload_room",
+      "style selection": "aether_style_selection",
+      "describe requirements": "aether_describe_requirements",
+      "generating design": "aether_generating_design",
+      "designs saved": "aether_saved_designs",
+      "project details": "aether_project_details",
+      "profilesettings": "aether_profile_settings",
+      "interactive 3d-walkthrough": "aether_interactive_3d_walkthrough",
+      "homepage(hero section)": "aether_ai_interior_design_hero_2",
+    };
+    PAGE = pageAliases[filename.replace(/\.html$/, "")] || filename.replace(/\.html$/, "");
   })();
 
   function $(sel, root) { return (root || document).querySelector(sel); }
@@ -57,6 +76,105 @@
     var icon = el.querySelector && el.querySelector(".material-symbols-outlined");
     if (icon) parts.push(textOf(icon));
     return parts.filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+  }
+
+  function replaceTemporaryImages() {
+    var fallback = IMAGE_BASE + "living-room.jpg";
+    $all("img").forEach(function (img) {
+      var src = img.getAttribute("src") || "";
+      if (!/^https?:\/\//i.test(src)) return;
+      var owner = img.closest(".glass-panel, .glass-card, section, article") || img.parentElement;
+      var context = ((img.getAttribute("alt") || "") + " " + (img.getAttribute("data-alt") || "") + " " + textOf(owner || img)).toLowerCase();
+      img.src = /bed|sleep|bedroom/.test(context) ? IMAGE_BASE + "bedroom.jpg"
+        : /kitchen/.test(context) ? IMAGE_BASE + "kitchen.jpg"
+        : /bath/.test(context) ? IMAGE_BASE + "bathroom.jpg"
+        : /office|desk|workspace|study|brutalist|avatar|profile|account|architect profile/.test(context) ? IMAGE_BASE + "office.jpg"
+        : fallback;
+    });
+    $all("[style*='background-image']").forEach(function (el) {
+      var style = el.getAttribute("style") || "";
+      if (/https?:\/\//i.test(style)) el.style.backgroundImage = "url(\"" + fallback + "\")";
+    });
+  }
+
+  function wireComparisonSlider() {
+    var slider = $("#comparison-slider");
+    var afterContainer = $("#after-image-container");
+    var handle = $("#slider-handle");
+    var afterImg = afterContainer && $("img", afterContainer);
+    if (!slider || !afterContainer || !handle || !afterImg || slider.dataset.aetherSliderBound) return;
+    slider.dataset.aetherSliderBound = "1";
+    slider.style.touchAction = "none";
+
+    function update(clientX) {
+      var rect = slider.getBoundingClientRect();
+      var position = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+      afterContainer.style.width = position + "%";
+      handle.style.left = position + "%";
+      afterImg.style.width = rect.width + "px";
+    }
+
+    handle.addEventListener("pointerdown", function (event) {
+      handle.setPointerCapture(event.pointerId);
+      update(event.clientX);
+    });
+    handle.addEventListener("pointermove", function (event) {
+      if (handle.hasPointerCapture(event.pointerId)) {
+        event.preventDefault();
+        update(event.clientX);
+      }
+    });
+    slider.addEventListener("pointerdown", function (event) {
+      if (event.target !== handle && !handle.contains(event.target)) update(event.clientX);
+    });
+    window.addEventListener("resize", function () { update(slider.getBoundingClientRect().left + slider.getBoundingClientRect().width / 2); });
+    update(slider.getBoundingClientRect().left + slider.getBoundingClientRect().width / 2);
+  }
+
+  function wireDashboardProjectScroll() {
+    if (PAGE !== "aether_dashboard") return;
+    var heading = $all("h3").filter(function (el) { return /recent projects/i.test(textOf(el)); })[0];
+    var grid = heading && heading.parentElement && heading.parentElement.nextElementSibling;
+    if (!grid || grid.dataset.aetherScrollBound) return;
+    grid.dataset.aetherScrollBound = "1";
+    grid.style.display = "flex";
+    grid.style.flexWrap = "nowrap";
+    grid.style.overflowX = "auto";
+    grid.style.overscrollBehaviorX = "contain";
+    grid.style.scrollBehavior = "smooth";
+    grid.style.cursor = "grab";
+    grid.style.paddingBottom = "10px";
+    $all(":scope > *", grid).forEach(function (card) {
+      card.style.flex = "0 0 min(88vw, 28rem)";
+    });
+
+    var dragging = false;
+    var startX = 0;
+    var startScroll = 0;
+    grid.addEventListener("pointerdown", function (event) {
+      dragging = true;
+      startX = event.clientX;
+      startScroll = grid.scrollLeft;
+      grid.style.cursor = "grabbing";
+      grid.setPointerCapture(event.pointerId);
+    });
+    grid.addEventListener("pointermove", function (event) {
+      if (!dragging) return;
+      event.preventDefault();
+      grid.scrollLeft = startScroll - (event.clientX - startX);
+    });
+    ["pointerup", "pointercancel"].forEach(function (type) {
+      grid.addEventListener(type, function () {
+        dragging = false;
+        grid.style.cursor = "grab";
+      });
+    });
+    grid.addEventListener("wheel", function (event) {
+      if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+        event.preventDefault();
+        grid.scrollLeft += event.deltaY;
+      }
+    }, { passive: false });
   }
 
   // ===========================================================================
@@ -94,6 +212,8 @@
         headers["Content-Type"] = "application/json";
         opts.body = JSON.stringify(opts.json);
       }
+      var authToken = this.getToken();
+      if (authToken) headers.Authorization = "Bearer " + authToken;
       return fetch(API_BASE + path, {
         method: opts.method || "GET",
         headers: headers,
@@ -168,53 +288,30 @@
     },
 
     upload: function (file) {
-      if (this.isDemo()) {
-        return Promise.resolve({
-          uploadId: "demo-upload",
-          filename: (file && file.name) || "demo-before.jpg",
-          width: 1600,
-          height: 1067,
-          url: DEMO_BEFORE_IMAGE,
-        });
-      }
       var fd = new FormData();
       fd.append("file", file);
       return this.request("/upload", { method: "POST", body: fd });
     },
     createTour: function (payload) {
-      if (this.isDemo()) {
-        var roomType = (payload && payload.roomType) || Draft.get().roomType || "living_room";
-        var tour = upsertDemoTour({ room_type: roomType, room_label: roomLabel(roomType), redesign_url: roomAfterImage(roomType), pano_url: roomAfterImage(roomType), thumb_url: roomAfterImage(roomType) });
-        return Promise.resolve({ tourId: tour.id, tour: tour });
-      }
       return this.request("/tours", { method: "POST", json: payload });
     },
     listTours: function () {
-      if (this.isDemo()) return Promise.resolve(demoToursResponse());
       return this.request("/tours");
     },
     getTour: function (id) {
-      if (this.isDemo() || id === DEMO_TOUR_ID) {
-        var found = demoHistory().filter(function (t) { return t.id === (id || DEMO_TOUR_ID); })[0] || demoTour();
+      if (this.isDemo() && id === DEMO_TOUR_ID) {
+        var found = demoHistory().filter(function (item) { return item.id === DEMO_TOUR_ID; })[0] || demoTour();
         return Promise.resolve({ tour: found });
       }
       return this.request("/tours/" + encodeURIComponent(id));
     },
     saveTour: function (id) {
-      if (this.isDemo() || id === DEMO_TOUR_ID) return Promise.resolve({ tour: upsertDemoTour({ saved: true }) });
       return this.request("/tours/" + encodeURIComponent(id) + "/save", { method: "POST" });
     },
     favoriteTour: function (id) {
-      if (this.isDemo() || id === DEMO_TOUR_ID) {
-        return Promise.resolve({ tour: upsertDemoTour({ favorite: true }) });
-      }
       return this.request("/tours/" + encodeURIComponent(id) + "/favorite", { method: "POST" });
     },
     deleteTour: function (id) {
-      if (this.isDemo() || id === DEMO_TOUR_ID) {
-        setDemoHistory(demoHistory().filter(function (item) { return item.id !== (id || DEMO_TOUR_ID); }));
-        return Promise.resolve({ ok: true });
-      }
       return this.request("/tours/" + encodeURIComponent(id), { method: "DELETE" });
     },
     exportUrl: function (id, kind) {
@@ -1845,6 +1942,9 @@
   function boot() {
     ensureThemeStyles();
     applyTheme(currentTheme());
+    replaceTemporaryImages();
+    wireComparisonSlider();
+    wireDashboardProjectScroll();
     guard();
     // Restore aetherSession on every page load so inline mockup guards pass
     // even in new tabs where only the localStorage token survived.

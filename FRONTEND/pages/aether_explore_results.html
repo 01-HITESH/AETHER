@@ -378,22 +378,17 @@
 
         const handleMove = (e) => {
             if (!isResizing) return;
-            e.preventDefault();
-            updateSlider(e.clientX);
+            const x = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            updateSlider(x);
         };
 
-        handle.addEventListener('pointerdown', (e) => {
-            isResizing = true;
-            handle.setPointerCapture(e.pointerId);
-            updateSlider(e.clientX);
-        });
-        handle.addEventListener('pointermove', handleMove);
-        handle.addEventListener('pointerup', () => isResizing = false);
-        handle.addEventListener('pointercancel', () => isResizing = false);
-        slider.addEventListener('pointerdown', (e) => {
-            if (e.target === handle || handle.contains(e.target)) return;
-            updateSlider(e.clientX);
-        });
+        handle.addEventListener('mousedown', () => isResizing = true);
+        window.addEventListener('mouseup', () => isResizing = false);
+        window.addEventListener('mousemove', handleMove);
+
+        handle.addEventListener('touchstart', () => isResizing = true);
+        window.addEventListener('touchend', () => isResizing = false);
+        window.addEventListener('touchmove', handleMove);
 
         // Initialize After Image Sizing
         window.addEventListener('resize', () => {
